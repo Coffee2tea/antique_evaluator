@@ -21,43 +21,25 @@ class AntiqueEvaluator:
         
         self.client = openai.OpenAI(api_key=self.api_key)
         
-        # Main request text for user messages
-        self.main_request = """
-        **任务：古董专业鉴定分析**
-        
-        请运用你的专业知识和GPT-o3推理能力，对这些图片中展示的古董进行系统性鉴定。这些图片是从不同角度拍摄的在古董拍卖行展示的一件展品。
-
-        **分析要求：**
-        1. **逐步推理**：按照既定的分析框架，逐步展开每个环节的分析
-        2. **证据导向**：每个判断都要有具体的视觉证据或理论依据支撑
-        3. **多角度验证**：从工艺、材料、风格、历史背景等多个维度交叉验证
-        4. **逻辑严密**：运用归纳和演绎推理，确保结论的可靠性
-        5. **疑点识别**：主动发现并分析可能存在的问题或争议点
-        
-        **输出格式要求：**
-        - **必须严格按照JSON格式返回，不要添加任何其他文本**
-        - authenticity_score必须准确反映你的专业判断
-        - detailed_report要包含完整的分析过程和结论
-        - 确保JSON格式正确，可以被程序解析
-        - 使用中文进行分析，专业术语要准确
-        
-        **重要提醒：请确保你返回的authenticity_score与detailed_report中的结论完全一致！这个评分将用于系统的进度条显示和可信度评估。**
-        
-        请开始你的专业分析，直接返回JSON格式的结果。
-        """
-        
         # System prompt for antique evaluation - optimized for GPT-o3's advanced reasoning capabilities
         self.system_prompt = """
         你是一个世界级的古董分析专家，运用最先进的GPT-o3推理能力，拥有深厚的古董鉴定知识和数十年的实战经验。你熟悉各个历史时期的文物特征、制作工艺、材料特点和市场价值。请运用你的专业知识和强大的逻辑推理能力进行深度分析。
 
         **重要：你必须以JSON格式返回分析结果，确保数据准确性和一致性。**
 
+        **📸 关键原则 - 图像优先分析法：**
+        1. **图像是鉴定的主要依据**：你的分析必须主要基于图像中的视觉证据
+        2. **文字信息仅作参考**：用户提供的标题、描述、年代、材质等信息只能作为背景参考，不能直接采信
+        3. **交叉验证是关键**：将用户描述与图像观察进行对比，指出一致性或矛盾之处
+        4. **独立判断能力**：即使用户描述与你的视觉分析不符，也要坚持基于图像证据的专业判断
+        5. **质疑和验证**：对用户提供的信息保持专业怀疑态度，通过图像分析来验证或反驳
+
         请按照以下结构化分析框架进行评估，并以指定的JSON格式返回：
 
         **分析框架：**
-        1. **基础信息识别**：朝代/时期、类型分类、材质分析
-        2. **工艺技术分析**：制作工艺、技术特点、细节观察
-        3. **真伪综合判断**：时代一致性、材料可信度、风格对比、现代痕迹
+        1. **基础信息识别**：朝代/时期、类型分类、材质分析（主要基于图像，参考用户信息）
+        2. **工艺技术分析**：制作工艺、技术特点、细节观察（完全基于图像）
+        3. **真伪综合判断**：时代一致性、材料可信度、风格对比、现代痕迹（图像证据为主，用户描述为辅助参考）
         4. **市场价值评估**：历史价值、艺术价值、市场行情
 
         **必须返回的JSON格式：**
@@ -67,16 +49,16 @@ class AntiqueEvaluator:
             "category": "明代青花瓷",
             "period": "明朝永乐年间",
             "material": "高岭土胎体，钴蓝釉料",
-            "brief_analysis": "基于工艺特征和历史背景的简要分析总结",
-            "detailed_report": "完整的专业鉴定报告，包含所有分析细节、判断依据和结论"
+            "brief_analysis": "基于图像分析的核心判断总结",
+            "detailed_report": "完整的专业鉴定报告，重点阐述图像证据，适当引用用户信息进行对比验证"
         }
         ```
 
         **字段说明：**
-        - authenticity_score: 真品可能性百分比 (0-100)
-        - category: 古董类型分类
-        - period: 历史时期/朝代
-        - material: 主要材质和工艺
+        - authenticity_score: 真品可能性百分比 (0-100) - 主要基于图像分析
+        - category: 古董类型分类 - 基于视觉特征识别
+        - period: 历史时期/朝代 - 基于工艺风格判断
+        - material: 主要材质和工艺 - 基于图像观察
         - brief_analysis: 2-3句话的核心判断总结
         - detailed_report: 详细的专业分析报告 (500-800字)
 
@@ -84,17 +66,21 @@ class AntiqueEvaluator:
         1. authenticity_score必须与detailed_report中的结论完全一致
         2. 所有分析都要有具体的视觉证据支撑
         3. detailed_report要包含完整的分析过程和专业术语
-        4. 确保JSON格式正确，所有字符串都要用双引号
-        5. 文本中的换行用\\n表示，引号用\\"转义
+        4. **重点强调图像观察结果，用户提供的信息只作为对比参考**
+        5. **如果用户描述与图像分析有矛盾，要明确指出并解释原因**
+        6. 确保JSON格式正确，所有字符串都要用双引号
+        7. 文本中的换行用\\n表示，引号用\\"转义
         """
     
-    def evaluate_antique(self, image_urls: list = None, uploaded_files: list = None) -> dict:
+    def evaluate_antique(self, image_urls: list = None, uploaded_files: list = None, descriptions: list = None, title: str = None) -> dict:
         """
         Evaluate antique using GPT-o3 with JSON response format
         
         Args:
             image_urls: List of image URLs to analyze
             uploaded_files: List of uploaded file objects
+            descriptions: List of description strings about the antique
+            title: Title or name of the antique
             
         Returns:
             Dictionary containing:
@@ -207,13 +193,16 @@ class AntiqueEvaluator:
             logger.info(f"Successfully processed {processed_count} images out of {len(uploaded_files or []) + len(image_urls or [])}")
             logger.info(f"Total image_content items: {len(image_content)}")
 
+            # Prepare user prompt with description information
+            user_prompt = self._prepare_user_prompt(descriptions or [], title)
+
             # Create the message for GPT-o3
             messages = [
                 {"role": "system", "content": self.system_prompt},
                 {
                     "role": "user", 
                     "content": [
-                        {"type": "text", "text": self.main_request}
+                        {"type": "text", "text": user_prompt}
                     ] + image_content
                 }
             ]
@@ -260,17 +249,29 @@ class AntiqueEvaluator:
         """Prepare the user prompt with context information"""
         prompt_parts = []
         
-        if title:
-            prompt_parts.append(f"物品标题: {title}")
-        
-        if descriptions:
-            desc_text = "\n".join(descriptions[:5])  # Limit descriptions
-            prompt_parts.append(f"相关描述信息:\n{desc_text}")
+        # Add user-provided information as reference context
+        if title or descriptions:
+            prompt_parts.append("**📋 用户提供的参考信息（仅供参考，不作为鉴定依据）：**")
+            
+            if title:
+                prompt_parts.append(f"物品标题: {title}")
+            
+            if descriptions:
+                desc_text = "\n".join(descriptions[:5])  # Limit descriptions
+                prompt_parts.append(f"用户描述:\n{desc_text}")
+            
+            prompt_parts.append("**⚠️ 重要提醒：以上信息仅供参考，请主要基于图像进行独立分析判断**")
         
         main_request = """
         **任务：古董专业鉴定分析**
         
-        请运用你的专业知识和GPT-o3推理能力，对这些图片中展示的古董进行系统性鉴定。这些图片是从不同角度拍摄的在古董拍卖行展示的一件展品。
+        请运用你的专业知识和GPT-o3推理能力，对这些图片中展示的古董进行系统性鉴定。
+
+        **📸 核心分析原则：**
+        1. **图像为主**：鉴定结论必须主要基于图像中的视觉证据
+        2. **独立分析**：首先完全基于图像进行分析，然后再参考用户提供的信息
+        3. **对比验证**：将图像分析结果与用户描述进行对比，指出一致或矛盾之处
+        4. **专业判断**：如果用户描述与图像证据冲突，要坚持专业的视觉分析结果
 
         **分析要求：**
         1. **逐步推理**：按照既定的分析框架，逐步展开每个环节的分析
@@ -278,13 +279,15 @@ class AntiqueEvaluator:
         3. **多角度验证**：从工艺、材料、风格、历史背景等多个维度交叉验证
         4. **逻辑严密**：运用归纳和演绎推理，确保结论的可靠性
         5. **疑点识别**：主动发现并分析可能存在的问题或争议点
+        6. **信息对比**：将图像观察结果与用户提供的参考信息进行专业对比分析
         
         **输出格式要求：**
         - **必须严格按照JSON格式返回，不要添加任何其他文本**
-        - authenticity_score必须准确反映你的专业判断
-        - detailed_report要包含完整的分析过程和结论
+        - authenticity_score必须准确反映你基于图像分析的专业判断
+        - detailed_report要重点阐述图像证据，适当引用用户信息进行对比
         - 确保JSON格式正确，可以被程序解析
         - 使用中文进行分析，专业术语要准确
+        - **在detailed_report中明确区分图像观察结果和用户提供信息的对比分析**
         
         **重要提醒：请确保你返回的authenticity_score与detailed_report中的结论完全一致！这个评分将用于系统的进度条显示和可信度评估。**
         
@@ -560,94 +563,146 @@ class AntiqueEvaluator:
         return text 
 
     def format_evaluation_report(self, report_text: str) -> str:
-        """Format the evaluation report with clean, simple HTML that renders properly in Streamlit"""
+        """Format the evaluation report with elegant, professional styling for all content"""
         if not report_text:
             return ""
         
         # Clean the text first
         cleaned_text = self._clean_text_for_display(report_text)
         
+        # Generate timestamp
+        import datetime
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        
         # Split into lines and format each section
         lines = cleaned_text.split('\n')
-        formatted_lines = []
-        current_section = ""
+        content_parts = []
         
         for line in lines:
             line = line.strip()
             if not line:
                 continue
-                
-            # Detect main sections
-            if any(keyword in line for keyword in ['一、', '二、', '三、', '四、']):
-                if current_section:
-                    formatted_lines.append('</div>')  # Close previous section
-                
-                section_title = line
-                if '一、' in line:
-                    section_icon = '🔍'
-                elif '二、' in line:
-                    section_icon = '⚙️'
-                elif '三、' in line:
-                    section_icon = '📊'
-                elif '四、' in line:
-                    section_icon = '💰'
+            
+            # Main sections (一、二、三、四、)
+            if any(keyword in line for keyword in ['一、', '二、', '三、', '四、', '第一', '第二', '第三', '第四']):
+                if '一、' in line or '第一' in line:
+                    icon = '🔍'
+                    color = '#2563eb'
+                elif '二、' in line or '第二' in line:
+                    icon = '⚙️'
+                    color = '#059669'
+                elif '三、' in line or '第三' in line:
+                    icon = '📊'
+                    color = '#d97706'
+                elif '四、' in line or '第四' in line:
+                    icon = '💰'
+                    color = '#7c3aed'
                 else:
-                    section_icon = '📋'
-                    
-                formatted_lines.append(f'''<div style="background: #f8fafc; border-left: 4px solid #3b82f6; margin: 1.5rem 0; padding: 1.5rem; border-radius: 8px;">
-<h3 style="color: #1e40af; margin: 0 0 1rem 0; font-size: 1.25rem; font-weight: 600;">
-{section_icon} {section_title}
-</h3>''')
-                current_section = section_title
+                    icon = '📋'
+                    color = '#4b5563'
+                
+                section_html = f'''
+<div style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-left: 5px solid {color}; margin: 2rem 0; padding: 2rem; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+<h2 style="color: {color}; margin: 0 0 1.5rem 0; font-size: 1.6rem; font-weight: 800; display: flex; align-items: center; gap: 1rem;">
+<span style="font-size: 2rem; background: rgba(59, 130, 246, 0.1); padding: 0.75rem; border-radius: 16px;">{icon}</span>
+{line}
+</h2>
+'''
+                content_parts.append(section_html)
                 
             elif line.startswith('**') and line.endswith('**'):
                 # Subsection headers
-                subsection_title = line[2:-2]
-                formatted_lines.append(f'''<h4 style="color: #374151; margin: 1rem 0 0.5rem 0; font-size: 1.1rem; font-weight: 500;">{subsection_title}</h4>''')
+                subsection = line[2:-2]
+                content_parts.append(f'<h3 style="color: #1f2937; margin: 2rem 0 1rem 0; font-size: 1.3rem; font-weight: 700; padding: 1rem 1.5rem; background: #f8fafc; border-radius: 12px; border-left: 4px solid #3b82f6;">{subsection}</h3>')
                 
-            elif ':' in line and len(line.split(':')[0]) < 30:
+            elif ':' in line and len(line.split(':')[0]) < 35:
                 # Key-value pairs
                 parts = line.split(':', 1)
                 if len(parts) == 2:
                     key = parts[0].strip()
                     value = parts[1].strip()
-                    formatted_lines.append(f'''<p style="margin: 0.5rem 0;"><strong style="color: #4338ca;">{key}:</strong> {value}</p>''')
+                    kv_html = f'''
+<div style="margin: 1.5rem 0; padding: 1.5rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 3px 12px rgba(0,0,0,0.06);">
+<div style="font-weight: 800; color: #1e40af; font-size: 1.1rem; margin-bottom: 0.5rem;">{key}</div>
+<div style="color: #374151; font-size: 1.05rem; line-height: 1.8; padding-left: 1rem; border-left: 3px solid #e2e8f0;">{value}</div>
+</div>'''
+                    content_parts.append(kv_html)
                 else:
-                    formatted_lines.append(f'''<p style="margin: 0.5rem 0; line-height: 1.7; color: #374151;">{line}</p>''')
-            elif line.startswith('结论'):
-                # Special formatting for conclusion
-                formatted_lines.append(f'''<div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 1rem; margin: 1rem 0;">
-<p style="margin: 0; color: #92400e; font-weight: 500;">{line}</p>
-</div>''')
+                    content_parts.append(f'<p style="margin: 1rem 0; line-height: 1.8; color: #374151; font-size: 1.1rem; font-weight: 500;">{line}</p>')
+                
+            elif line.startswith('结论') or '真品可能性' in line or '综合判断' in line:
+                # Conclusions
+                conclusion_html = f'''
+<div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 3px solid #f59e0b; border-radius: 16px; padding: 2rem; margin: 2rem 0; box-shadow: 0 8px 25px rgba(245, 158, 11, 0.15);">
+<div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+<span style="font-size: 2rem; background: #ffffff; padding: 0.75rem; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">⚖️</span>
+<h3 style="color: #92400e; margin: 0; font-size: 1.3rem; font-weight: 700;">专业鉴定结论</h3>
+</div>
+<p style="margin: 0; color: #92400e; font-weight: 700; font-size: 1.1rem; line-height: 1.7;">{line}</p>
+</div>'''
+                content_parts.append(conclusion_html)
+                
+            elif line.startswith('建议') or '注意事项' in line:
+                # Recommendations
+                rec_html = f'''
+<div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #10b981; border-radius: 16px; padding: 2rem; margin: 2rem 0;">
+<div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+<span style="font-size: 1.8rem;">💡</span>
+<h4 style="color: #065f46; margin: 0; font-size: 1.2rem; font-weight: 700;">专业建议</h4>
+</div>
+<p style="margin: 0; color: #065f46; font-weight: 600; font-size: 1.1rem; line-height: 1.7;">{line}</p>
+</div>'''
+                content_parts.append(rec_html)
+                
             else:
                 # Regular paragraphs
-                formatted_lines.append(f'''<p style="margin: 0.5rem 0; line-height: 1.7; color: #374151;">{line}</p>''')
+                if len(line) > 100:
+                    content_parts.append(f'<div style="margin: 1.5rem 0; padding: 1.5rem; background: #fefefe; border-radius: 12px; border-left: 3px solid #e2e8f0;"><p style="margin: 0; line-height: 1.9; color: #374151; font-size: 1.1rem; font-weight: 500;">{line}</p></div>')
+                else:
+                    content_parts.append(f'<p style="margin: 1rem 0; line-height: 1.8; color: #374151; font-size: 1.1rem; font-weight: 500;">{line}</p>')
         
-        # Close the last section if exists
-        if current_section:
-            formatted_lines.append('</div>')
+        # Close any open divs
+        if content_parts and '<div style="background: linear-gradient' in content_parts[-1] and not content_parts[-1].endswith('</div>'):
+            content_parts.append('</div>')
         
-        # Wrap in simple container
-        formatted_content = '\n'.join(formatted_lines)
+        content = '\n'.join(content_parts)
         
-        # Generate current time for the report
-        import datetime
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-        
-        return f"""<div style="font-family: system-ui, sans-serif; max-width: 100%; margin: 0 auto;">
-<div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 2rem; border-radius: 12px 12px 0 0; text-align: center;">
-<h1 style="margin: 0; font-size: 1.8rem; font-weight: 700;">🏛️ 专业古董文物鉴定报告</h1>
-<p style="margin: 0.5rem 0 0 0; font-size: 1rem; opacity: 0.9;">基于人工智能深度学习技术的综合分析评估</p>
+        # Create the full report
+        return f'''
+<div style="font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 100%; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.12); border: 1px solid #e2e8f0;">
+
+<div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1d4ed8 100%); color: white; padding: 3rem 2.5rem; text-align: center;">
+<div style="font-size: 3.5rem; margin-bottom: 1rem;">🏛️</div>
+<h1 style="margin: 0; font-size: 2.4rem; font-weight: 800; margin-bottom: 0.75rem;">专业古董文物鉴定报告</h1>
+<div style="font-size: 1.2rem; opacity: 0.95; font-weight: 600;">基于人工智能深度学习技术的综合分析评估</div>
+<div style="margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.15); border-radius: 50px; display: inline-block; font-size: 1rem; font-weight: 600;">📅 生成时间: {timestamp}</div>
 </div>
-<div style="background: white; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px; padding: 2rem;">
-{formatted_content}
-<div style="border-top: 1px solid #e5e7eb; background: #f8fafc; padding: 1.5rem; margin: 2rem -2rem -2rem -2rem; border-radius: 0 0 12px 12px; text-align: center;">
-<div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-<p style="margin: 0; color: #065f46; font-size: 0.9rem;">⚠️ <strong>重要声明</strong>：本报告仅供参考，最终鉴定结果需结合实物检测。</p>
+
+<div style="padding: 3rem 2.5rem; background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);">
+{content}
 </div>
-<div style="color: #6b7280; font-size: 0.8rem;">
-<span>🤖 AI鉴定模型</span> | <span>📅 生成时间: {current_time}</span> | <span>🔒 数据安全保护</span>
+
+<div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 2.5rem; border-top: 1px solid #e2e8f0; text-align: center;">
+<div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #10b981; border-radius: 16px; padding: 2rem; margin-bottom: 2rem;">
+<div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1rem;">
+<span style="font-size: 1.5rem;">⚠️</span>
+<h3 style="color: #065f46; margin: 0; font-size: 1.2rem; font-weight: 700;">重要声明</h3>
+</div>
+<p style="margin: 0; color: #065f46; font-size: 1rem; line-height: 1.6; font-weight: 600;">本报告基于AI深度学习分析生成，仅供专业参考。最终鉴定结果需结合实物检测，建议咨询权威古董鉴定机构进行确认。</p>
+</div>
+
+<div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; color: #6b7280; font-size: 0.9rem; font-weight: 500;">
+<div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.7); border-radius: 25px; border: 1px solid #e2e8f0;">
+<span>🤖</span><span>GPT-o3 AI鉴定模型</span>
+</div>
+<div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.7); border-radius: 25px; border: 1px solid #e2e8f0;">
+<span>🔒</span><span>数据安全保护</span>
+</div>
+<div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.7); border-radius: 25px; border: 1px solid #e2e8f0;">
+<span>🏺</span><span>专业古董鉴定</span>
 </div>
 </div>
 </div>
-</div>""" 
+
+</div>
+'''

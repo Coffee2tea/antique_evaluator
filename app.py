@@ -144,6 +144,23 @@ def format_evaluation_report(report_text: str) -> str:
     """
 
 def main():
+    # Initialize session state for reset functionality
+    if "reset_trigger" not in st.session_state:
+        st.session_state.reset_trigger = False
+    
+    # Reset function
+    def reset_app():
+        """Reset all form inputs and uploaded files"""
+        st.session_state.reset_trigger = not st.session_state.reset_trigger
+        # Clear file uploader
+        if "uploaded_files" in st.session_state:
+            del st.session_state.uploaded_files
+        # Clear all text inputs
+        for key in list(st.session_state.keys()):
+            if key.startswith(("manual_title", "manual_description", "estimated_period", "estimated_material", "acquisition_info")):
+                del st.session_state[key]
+        st.rerun()
+    
     # Header with elegant, bright design
     st.markdown("""
     <div style='text-align: center; padding: 3rem 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; border-radius: 20px; margin-bottom: 2.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.2); position: relative; overflow: hidden;'>
@@ -831,12 +848,13 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # Upload area
+    # Upload area with dynamic key for reset functionality
     uploaded_files = st.file_uploader(
         "选择图片文件:",
         type=['jpg', 'jpeg', 'png', 'webp'],
         accept_multiple_files=True,
-        help="可以同时上传多张图片，支持JPG、PNG、WEBP格式"
+        help="可以同时上传多张图片，支持JPG、PNG、WEBP格式",
+        key=f"uploaded_files_{st.session_state.reset_trigger}"
     )
     
     # Display uploaded images with better styling
@@ -882,7 +900,7 @@ def main():
             st.info(f"📊 总文件大小: {file_size_mb:.1f} MB")
     
     # Input fields section
-    st.markdown('<div class="section-header"><h3>📝 简单古董信息描述</h3></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><h3>📝 古董信息描述 <span style="font-size: 0.6em; font-weight: 400; color: #6c757d;">(更多详细背景信息能为鉴定带来更好的效果)</span></h3></div>', unsafe_allow_html=True)
     
     # Two-column layout for input fields
     col1, col2 = st.columns(2)
@@ -890,41 +908,68 @@ def main():
     with col1:
         manual_title = st.text_input(
             "🏷️ 古董名称/标题 (可选):",
-            placeholder="例如：清代康熙青花瓷碗、汉代玉璧、明代铜镜等"
+            placeholder="例如：清代康熙青花瓷碗、汉代玉璧、明代铜镜等",
+            key=f"manual_title_{st.session_state.reset_trigger}"
         )
         
         manual_description = st.text_area(
             "📄 古董描述信息 (可选):",
             placeholder="请输入古董的详细描述，如：\n- 年代/朝代\n- 材质（陶瓷、玉石、金属等）\n- 尺寸大小\n- 制作工艺",
-            height=220
+            height=220,
+            key=f"manual_description_{st.session_state.reset_trigger}"
         )
     
     with col2:
         estimated_period = st.text_input(
             "📅 估计年代:",
-            placeholder="例如：清代、民国、宋代等"
+            placeholder="例如：清代、民国、宋代等",
+            key=f"estimated_period_{st.session_state.reset_trigger}"
         )
         
         estimated_material = st.text_input(
             "🔍 估计材质:",
-            placeholder="例如：青花瓷、和田玉、青铜等"
+            placeholder="例如：青花瓷、和田玉、青铜等",
+            key=f"estimated_material_{st.session_state.reset_trigger}"
         )
         
         acquisition_info = st.text_area(
             "📍 获得方式:",
             placeholder="例如：家传、拍卖购买、古玩市场等",
-            height=120
+            height=120,
+            key=f"acquisition_info_{st.session_state.reset_trigger}"
         )
     
-    # Evaluation button with enhanced styling and perfect center alignment
+    # Add clarification about the role of text inputs
+    st.info("""
+    💡 **说明**: 以上文字信息将作为参考背景提供给AI鉴定模型。
+    
+    📸 **主要鉴定依据**: 图片中的视觉证据（工艺、材质、细节等）
+    
+    📝 **辅助参考信息**: 您提供的文字描述
+    
+    🔍 **分析方式**: AI将首先基于图片进行独立分析，然后对比您的描述信息，指出一致性或差异。
+    """)
+    
+    # Button section with evaluation and reset buttons
     st.markdown("---")
     st.markdown('<div style="margin: 2rem 0; text-align: center;">', unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns([1, 3, 1])
+    # Create columns for buttons
+    col1, col2, col3, col4, col5 = st.columns([1, 2, 0.5, 2, 1])
+    
     with col2:
         evaluate_button = st.button("🔍 开始古董鉴定", type="primary", use_container_width=True)
     
+    with col4:
+        reset_button = st.button("🔄 重新开始", use_container_width=True, help="清除所有上传的图片和填写的信息，开始新的鉴定")
+    
     st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Handle reset button click
+    if reset_button:
+        reset_app()
+        st.success("✅ 已重置所有内容，可以开始新的鉴定！")
+        st.rerun()
     
     if evaluate_button:
         if not uploaded_files:
@@ -934,7 +979,7 @@ def main():
         # Build description
         full_description = []
         if manual_description:
-            full_description.append(f"基本描述: {manual_description}")
+            full_description.append(f"古董描述信息: {manual_description}")
         if estimated_period:
             full_description.append(f"估计年代: {estimated_period}")
         if estimated_material:
@@ -1059,7 +1104,9 @@ def process_evaluation_with_uploaded_files(uploaded_files, description: str, tit
         
         # Call AI evaluation (this is where the long process happens)
         result = evaluator.evaluate_antique(
-            uploaded_files=image_data_urls
+            uploaded_files=image_data_urls,
+            descriptions=descriptions,
+            title=title
         )
         
         # Step 5: Show analysis phases after API call
@@ -1152,12 +1199,29 @@ def process_evaluation_with_uploaded_files(uploaded_files, description: str, tit
                             st.markdown(f"✅ {uploaded_file.name}")
                         else:
                             st.markdown(f"❌ {uploaded_file.name} (处理失败)")
+                    
+                    st.markdown("**📸 分析方式:**")
+                    st.markdown("- 主要依据：图片视觉证据")
+                    st.markdown("- 辅助参考：用户描述信息")
                 
                 with col2:
+                    st.markdown("**📝 用户提供的参考信息:**")
+                    
+                    # Get original input fields from the function scope
+                    # We need to pass these as parameters to track them properly
                     if title:
-                        st.markdown(f"**📝 标题:** {title}")
+                        st.markdown(f"• **古董名称/标题:** {title}")
+                    
+                    # Parse the combined description to show individual fields
                     if description:
-                        st.markdown(f"**📄 描述:** {description[:200]}{'...' if len(description) > 200 else ''}")
+                        desc_lines = description.split('\n')
+                        for line in desc_lines:
+                            if line.strip():
+                                st.markdown(f"• **{line}**")
+                    
+                    if not title and not description:
+                        st.markdown("*未提供文字描述信息*")
+                        st.markdown("*鉴定完全基于图片分析*")
             
             # Recommendations
             st.markdown("### 💡 专业建议")
