@@ -128,7 +128,7 @@ def encode_uploaded_image(uploaded_file) -> str:
         return None
 
 def format_evaluation_report(report_text: str) -> str:
-    """Format the evaluation report with enhanced professional styling"""
+    """Format the evaluation report with clean, elegant styling"""
     if not report_text:
         return ""
     
@@ -139,59 +139,62 @@ def format_evaluation_report(report_text: str) -> str:
     for line in lines:
         line = line.strip()
         if not line:
+            formatted_lines.append('<br>')
             continue
             
         # Detect major section headers (第一步, 第二步, etc.)
         if any(keyword in line for keyword in ['第一步', '第二步', '第三步', '第四步', '第五步']):
-            formatted_lines.append(f'<h2 class="report-major-section">{line}</h2>')
+            formatted_lines.append(f'<h2 class="report-major-title">{line}</h2>')
         
         # Detect main section headers
         elif any(keyword in line for keyword in ['基础信息识别', '工艺技术分析', '真伪综合判断', '市场价值评估', '综合结论', '最终建议', '总结评估']):
-            formatted_lines.append(f'<h3 class="report-section-header">{line}</h3>')
+            formatted_lines.append(f'<h3 class="report-section-title">{line}</h3>')
+        
+        # Detect elegant subtitles with brackets 【】or special keywords
+        elif ('【' in line and '】' in line) or any(keyword in line for keyword in ['图像观察', '工艺分析', '材质检测', '时代特征', '真伪判断', '市场评估', '投资建议', '保存建议', '收藏价值']):
+            formatted_lines.append(f'<h4 class="report-elegant-subtitle">{line}</h4>')
         
         # Detect subsection headers (usually with ** or specific patterns)
-        elif (line.startswith('**') and line.endswith('**')) or any(keyword in line.lower() for keyword in ['朝代分析', '类型识别', '材质判断', '工艺特征', '制作技法', '时代特征', '真伪分析', '可信度评估', '历史价值', '艺术价值', '市场行情', '投资建议']):
+        elif (line.startswith('**') and line.endswith('**')) or any(keyword in line.lower() for keyword in ['朝代分析', '类型识别', '材质判断', '工艺特征', '制作技法', '时代特征', '真伪分析', '可信度评估', '历史价值', '艺术价值', '市场行情']):
             clean_line = line.replace('**', '').strip()
-            formatted_lines.append(f'<h4 class="report-subsection">{clean_line}</h4>')
+            formatted_lines.append(f'<h5 class="report-subtitle">{clean_line}</h5>')
         
-        # Detect key-value pairs with better formatting
+        # Detect key-value pairs
         elif ':' in line and len(line.split(':')[0]) < 25:
             parts = line.split(':', 1)
             if len(parts) == 2:
                 key = parts[0].strip().replace('**', '')
                 value = parts[1].strip()
-                formatted_lines.append(f'<div class="report-item"><span class="report-label">{key}:</span><span class="report-value">{value}</span></div>')
+                formatted_lines.append(f'<p class="report-detail"><strong>{key}:</strong> {value}</p>')
             else:
-                formatted_lines.append(f'<p class="report-paragraph">{line}</p>')
+                formatted_lines.append(f'<p class="report-text">{line}</p>')
         
         # Detect numbered points or bullet points
         elif line.startswith(('1.', '2.', '3.', '4.', '5.', '•', '-', '⚠️', '✅', '❌', '💡', '🔍')):
-            formatted_lines.append(f'<div class="report-point">{line}</div>')
+            formatted_lines.append(f'<p class="report-point">{line}</p>')
         
         # Detect score/rating lines
         elif any(keyword in line.lower() for keyword in ['可信度', '评分', '分数', '%', '星级']):
-            formatted_lines.append(f'<div class="report-score">{line}</div>')
+            formatted_lines.append(f'<p class="report-highlight">{line}</p>')
         
         # Regular paragraph
         else:
-            formatted_lines.append(f'<p class="report-paragraph">{line}</p>')
+            formatted_lines.append(f'<p class="report-text">{line}</p>')
     
-    # Wrap in professional container
+    # Create clean, elegant report
     formatted_content = '\n'.join(formatted_lines)
     
     return f"""
-    <div class="professional-report-container">
+    <div class="elegant-report">
         <div class="report-header">
-            <h2 class="report-title">📋 AI专业鉴定分析报告</h2>
-            <div class="report-meta">基于GPT-o3深度推理引擎的综合评估</div>
+            <h1 class="report-main-title">📋 AI专业鉴定分析报告</h1>
+            <p class="report-subtitle-meta">基于GPT-o3深度推理引擎的综合评估</p>
         </div>
-        <div class="report-content">
+        <div class="report-body">
             {formatted_content}
         </div>
         <div class="report-footer">
-            <div class="disclaimer">
-                ⚠️ 本报告仅供参考，最终鉴定结果需结合实物检测。建议咨询专业古董鉴定机构进行确认。
-            </div>
+            <p class="report-disclaimer">⚠️ 本报告仅供参考，最终鉴定结果需结合实物检测。建议咨询专业古董鉴定机构进行确认。</p>
         </div>
     </div>
     """
@@ -1035,6 +1038,209 @@ def main():
         
         .report-point {
             padding: 0.6rem 1rem;
+        }
+    }
+    
+    /* Clean, Elegant Report Styling */
+    .elegant-report {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0;
+        font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.7;
+        color: #2d3748;
+        background: #ffffff;
+    }
+    
+    .report-header {
+        text-align: center;
+        padding: 3rem 2rem 2rem 2rem;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 3rem;
+    }
+    
+    .report-main-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #1a202c;
+        margin: 0 0 1rem 0;
+        font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+        letter-spacing: -0.02em;
+    }
+    
+    .report-subtitle-meta {
+        font-size: 1.1rem;
+        color: #718096;
+        margin: 0;
+        font-weight: 500;
+    }
+    
+    .report-body {
+        padding: 0 2rem;
+    }
+    
+    .report-major-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #2b6cb0;
+        margin: 3rem 0 1.5rem 0;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #2b6cb0;
+        font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    .report-section-title {
+        font-size: 1.4rem;
+        font-weight: 650;
+        color: #2d3748;
+        margin: 2.5rem 0 1.2rem 0;
+        font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    .report-elegant-subtitle {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #2b6cb0;
+        margin: 3rem 0 1.8rem 0;
+        text-align: center;
+        font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+        padding: 1.2rem 2rem;
+        background: linear-gradient(135deg, rgba(43, 108, 176, 0.08) 0%, rgba(43, 108, 176, 0.04) 100%);
+        border-radius: 16px;
+        border: 2px solid rgba(43, 108, 176, 0.2);
+        position: relative;
+        box-shadow: 0 4px 20px rgba(43, 108, 176, 0.15);
+        letter-spacing: 0.02em;
+        text-shadow: 0 1px 2px rgba(43, 108, 176, 0.2);
+    }
+    
+    .report-elegant-subtitle::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(43, 108, 176, 0.03) 50%, transparent 70%);
+        border-radius: 14px;
+        pointer-events: none;
+    }
+    
+    .report-elegant-subtitle::after {
+        content: '✦';
+        position: absolute;
+        top: 50%;
+        left: 1rem;
+        transform: translateY(-50%);
+        color: rgba(43, 108, 176, 0.6);
+        font-size: 1.2rem;
+    }
+    
+    .report-subtitle {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #4a5568;
+        margin: 2rem 0 1rem 0;
+        font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    .report-text {
+        font-size: 1.05rem;
+        line-height: 1.8;
+        color: #2d3748;
+        margin: 1.2rem 0;
+        text-align: justify;
+    }
+    
+    .report-detail {
+        font-size: 1.05rem;
+        line-height: 1.7;
+        color: #2d3748;
+        margin: 1rem 0;
+        padding-left: 1rem;
+        border-left: 3px solid #e2e8f0;
+    }
+    
+    .report-detail strong {
+        color: #2b6cb0;
+        font-weight: 600;
+    }
+    
+    .report-point {
+        font-size: 1.05rem;
+        line-height: 1.7;
+        color: #2d3748;
+        margin: 0.8rem 0;
+        padding-left: 1.5rem;
+        position: relative;
+    }
+    
+    .report-highlight {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2b6cb0;
+        margin: 1.5rem 0;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(90deg, rgba(43, 108, 176, 0.08) 0%, rgba(43, 108, 176, 0.03) 100%);
+        border-left: 4px solid #2b6cb0;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .report-footer {
+        padding: 2rem;
+        margin-top: 3rem;
+        border-top: 1px solid #e2e8f0;
+        text-align: center;
+    }
+    
+    .report-disclaimer {
+        font-size: 0.95rem;
+        color: #718096;
+        margin: 0;
+        font-style: italic;
+        line-height: 1.6;
+    }
+    
+    /* Responsive design for elegant report */
+    @media (max-width: 768px) {
+        .elegant-report {
+            margin: 1rem;
+            max-width: none;
+        }
+        
+        .report-header {
+            padding: 2rem 1.5rem 1.5rem 1.5rem;
+        }
+        
+        .report-main-title {
+            font-size: 1.8rem;
+        }
+        
+        .report-body {
+            padding: 0 1.5rem;
+        }
+        
+        .report-major-title {
+            font-size: 1.4rem;
+        }
+        
+        .report-section-title {
+            font-size: 1.25rem;
+        }
+        
+        .report-elegant-subtitle {
+            font-size: 1.3rem;
+            margin: 2rem 0 1.3rem 0;
+            padding: 1rem 1.5rem;
+        }
+        
+        .report-elegant-subtitle::after {
+            left: 0.8rem;
+            font-size: 1rem;
+        }
+        
+        .report-subtitle {
+            font-size: 1.1rem;
         }
     }
     </style>
