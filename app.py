@@ -6,6 +6,8 @@ import time
 import base64
 from PIL import Image
 import io
+import os
+import glob
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -54,6 +56,39 @@ def create_authenticity_progress_bar(score: int) -> str:
     </div>
     """
     return progress_html
+
+def encode_image_file_path(file_path: str) -> str:
+    """Convert image file path to base64 data URL for OpenAI API"""
+    try:
+        # Read the file content
+        with open(file_path, 'rb') as f:
+            file_content = f.read()
+        
+        logger.info(f"Read {len(file_content)} bytes from {file_path}")
+        
+        # Encode to base64
+        encoded_image = base64.b64encode(file_content).decode('utf-8')
+        logger.info(f"Encoded image to base64, length: {len(encoded_image)}")
+        
+        # Determine the image format based on file extension
+        file_ext = os.path.splitext(file_path)[1].lower()
+        if file_ext in ['.jpg', '.jpeg']:
+            mime_type = 'image/jpeg'
+        elif file_ext == '.png':
+            mime_type = 'image/png'
+        elif file_ext == '.webp':
+            mime_type = 'image/webp'
+        else:
+            mime_type = 'image/jpeg'  # Default
+        
+        data_url = f"data:{mime_type};base64,{encoded_image}"
+        logger.info(f"Created data URL with mime type: {mime_type}, total length: {len(data_url)}")
+        
+        return data_url
+        
+    except Exception as e:
+        logger.error(f"Failed to encode image file {file_path}: {e}")
+        return None
 
 def encode_uploaded_image(uploaded_file) -> str:
     """Convert uploaded file to base64 data URL for OpenAI API"""
@@ -143,6 +178,74 @@ def format_evaluation_report(report_text: str) -> str:
     </div>
     """
 
+def load_example_data(example_folder: str):
+    """Load example antique data from the specified folder"""
+    try:
+        # Load text information
+        info_file = os.path.join(example_folder, "info.txt")
+        title = ""
+        description = ""
+        estimated_period = ""
+        estimated_material = ""
+        acquisition_info = ""
+        
+        if os.path.exists(info_file):
+            with open(info_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+                for line in content.split('\n'):
+                    if line.startswith('title:'):
+                        title = line.replace('title:', '').strip()
+                    elif line.startswith('description:'):
+                        description = line.replace('description:', '').strip()
+                    elif line.startswith('estimated_period:'):
+                        estimated_period = line.replace('estimated_period:', '').strip()
+                    elif line.startswith('estimated_material:'):
+                        estimated_material = line.replace('estimated_material:', '').strip()
+                    elif line.startswith('acquisition_info:'):
+                        acquisition_info = line.replace('acquisition_info:', '').strip()
+        
+        # Load image files
+        image_extensions = ['*.jpg', '*.jpeg', '*.png', '*.webp']
+        image_files = []
+        
+        # Use a set to avoid duplicates
+        unique_image_files = set()
+        
+        for ext in image_extensions:
+            # Search for lowercase extensions
+            found_files = glob.glob(os.path.join(example_folder, ext))
+            unique_image_files.update(found_files)
+            
+            # Search for uppercase extensions
+            found_files = glob.glob(os.path.join(example_folder, ext.upper()))
+            unique_image_files.update(found_files)
+        
+        # Convert set back to list and sort for consistent ordering
+        image_files = sorted(list(unique_image_files))
+        
+        return title, description, estimated_period, estimated_material, acquisition_info, image_files
+        
+    except Exception as e:
+        logger.error(f"Failed to load example data from {example_folder}: {e}")
+        return "", "", "", "", "", []
+
+def load_example_into_session(example_num: int):
+    """Load example data into session state"""
+    example_folder = f"example{example_num}"
+    title, description, estimated_period, estimated_material, acquisition_info, image_files = load_example_data(example_folder)
+    
+    # Store in session state
+    st.session_state.example_title = title
+    st.session_state.example_description = description
+    st.session_state.example_estimated_period = estimated_period
+    st.session_state.example_estimated_material = estimated_material
+    st.session_state.example_acquisition_info = acquisition_info
+    st.session_state.example_images = image_files
+    st.session_state.example_loaded = example_num
+    
+    # Trigger app reset to update UI
+    st.session_state.reset_trigger = not st.session_state.reset_trigger
+
 def main():
     # Initialize session state for reset functionality
     if "reset_trigger" not in st.session_state:
@@ -159,6 +262,21 @@ def main():
         for key in list(st.session_state.keys()):
             if key.startswith(("manual_title", "manual_description", "estimated_period", "estimated_material", "acquisition_info")):
                 del st.session_state[key]
+        # Clear example data
+        if hasattr(st.session_state, 'example_title'):
+            del st.session_state.example_title
+        if hasattr(st.session_state, 'example_description'):
+            del st.session_state.example_description
+        if hasattr(st.session_state, 'example_estimated_period'):
+            del st.session_state.example_estimated_period
+        if hasattr(st.session_state, 'example_estimated_material'):
+            del st.session_state.example_estimated_material
+        if hasattr(st.session_state, 'example_acquisition_info'):
+            del st.session_state.example_acquisition_info
+        if hasattr(st.session_state, 'example_images'):
+            del st.session_state.example_images
+        if hasattr(st.session_state, 'example_loaded'):
+            del st.session_state.example_loaded
         st.rerun()
     
     # Header with elegant, bright design
@@ -830,6 +948,34 @@ def main():
         """)
     
     # Main content section
+    # Example buttons section - place above upload section
+    st.markdown("""
+    <div class="example-buttons-section" style="margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 16px; border: 1px solid rgba(0,0,0,0.1);">
+        <h4 style="margin: 0 0 1rem 0; color: #495057; font-weight: 600; text-align: center;">📚 试用演示例子</h4>
+        <p style="margin: 0 0 1.5rem 0; color: #6c757d; text-align: center; font-size: 0.9rem;">点击下方按钮快速加载古董示例进行体验</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Create two columns for example buttons
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        example1_button = st.button("🏺 试用例子1", use_container_width=True, help="加载第一个古董示例")
+    
+    with col2:
+        example2_button = st.button("🏛️ 试用例子2", use_container_width=True, help="加载第二个古董示例")
+    
+    # Handle example button clicks
+    if example1_button:
+        load_example_into_session(1)
+        st.success("✅ 已加载试用例子1！")
+        st.rerun()
+    
+    if example2_button:
+        load_example_into_session(2)
+        st.success("✅ 已加载试用例子2！")
+        st.rerun()
+    
     # Upload prompt section with icons and clear instructions
     st.markdown("""
     <div class="upload-prompt-section">
@@ -857,15 +1003,28 @@ def main():
         key=f"uploaded_files_{st.session_state.reset_trigger}"
     )
     
-    # Display uploaded images with better styling
-    if uploaded_files:
-        st.markdown('<div class="section-header"><h3>🖼️ 预览上传的图片</h3></div>', unsafe_allow_html=True)
-        
-        st.success(f"✅ 已成功上传 {len(uploaded_files)} 张图片")
+    # Check if example images should be displayed
+    example_images_to_display = []
+    if hasattr(st.session_state, 'example_loaded') and hasattr(st.session_state, 'example_images'):
+        if st.session_state.example_loaded and st.session_state.example_images:
+            example_images_to_display = st.session_state.example_images
+    
+    # Display uploaded images or example images with better styling
+    if uploaded_files or example_images_to_display:
+        if uploaded_files:
+            st.markdown('<div class="section-header"><h3>🖼️ 预览上传的图片</h3></div>', unsafe_allow_html=True)
+            st.success(f"✅ 已成功上传 {len(uploaded_files)} 张图片")
+            images_to_display = uploaded_files
+            is_uploaded = True
+        else:
+            st.markdown(f'<div class="section-header"><h3>🖼️ 试用例子{st.session_state.example_loaded} - 预览图片</h3></div>', unsafe_allow_html=True)
+            st.info(f"📚 正在显示试用例子{st.session_state.example_loaded}的图片")
+            images_to_display = example_images_to_display
+            is_uploaded = False
         
         # Display images in a responsive grid
         cols_per_row = 3
-        num_images = len(uploaded_files)
+        num_images = len(images_to_display)
         
         for i in range(0, num_images, cols_per_row):
             cols = st.columns(cols_per_row)
@@ -875,32 +1034,54 @@ def main():
                 if idx < num_images:
                     with cols[j]:
                         try:
-                            image = Image.open(uploaded_files[idx])
+                            if is_uploaded:
+                                image = Image.open(images_to_display[idx])
+                                caption = f"图片 {idx + 1}: {images_to_display[idx].name}"
+                            else:
+                                image = Image.open(images_to_display[idx])
+                                filename = os.path.basename(images_to_display[idx])
+                                caption = f"示例图片 {idx + 1}: {filename}"
+                            
                             st.markdown('<div class="image-preview">', unsafe_allow_html=True)
-                            st.image(image, 
-                                   caption=f"图片 {idx + 1}: {uploaded_files[idx].name}", 
-                                   use_column_width=True)
+                            st.image(image, caption=caption, use_column_width=True)
                             st.markdown('</div>', unsafe_allow_html=True)
                         except Exception as e:
-                            st.error(f"❌ 无法显示图片 {idx + 1}: {uploaded_files[idx].name}")
+                            if is_uploaded:
+                                st.error(f"❌ 无法显示图片 {idx + 1}: {images_to_display[idx].name}")
+                            else:
+                                st.error(f"❌ 无法显示示例图片 {idx + 1}")
         
-        # File size check
-        # Reset file pointers before calculating size (Image.open() moves the pointer)
-        for f in uploaded_files:
-            f.seek(0)
-        
-        total_size = sum(len(f.read()) for f in uploaded_files)
-        for f in uploaded_files:
-            f.seek(0)
-        
-        if total_size > 50 * 1024 * 1024:
-            st.warning("⚠️ 上传的图片总大小超过50MB，可能影响处理速度")
-        else:
-            file_size_mb = total_size / (1024 * 1024)
-            st.info(f"📊 总文件大小: {file_size_mb:.1f} MB")
+        # File size check for uploaded files only
+        if is_uploaded:
+            # Reset file pointers before calculating size (Image.open() moves the pointer)
+            for f in uploaded_files:
+                f.seek(0)
+            
+            total_size = sum(len(f.read()) for f in uploaded_files)
+            for f in uploaded_files:
+                f.seek(0)
+            
+            if total_size > 50 * 1024 * 1024:
+                st.warning("⚠️ 上传的图片总大小超过50MB，可能影响处理速度")
+            else:
+                file_size_mb = total_size / (1024 * 1024)
+                st.info(f"📊 总文件大小: {file_size_mb:.1f} MB")
     
     # Input fields section
     st.markdown('<div class="section-header"><h3>📝 古董信息描述 <span style="font-size: 0.6em; font-weight: 400; color: #6c757d;">(更多详细背景信息能为鉴定带来更好的效果)</span></h3></div>', unsafe_allow_html=True)
+    
+    # Get example data if available
+    example_title = ""
+    example_description = ""
+    example_estimated_period = ""
+    example_estimated_material = ""
+    example_acquisition_info = ""
+    if hasattr(st.session_state, 'example_title') and hasattr(st.session_state, 'example_description') and hasattr(st.session_state, 'example_estimated_period') and hasattr(st.session_state, 'example_estimated_material') and hasattr(st.session_state, 'example_acquisition_info'):
+        example_title = st.session_state.example_title if st.session_state.example_title != "[请在此输入古董标题]" else ""
+        example_description = st.session_state.example_description if st.session_state.example_description != "[请在此输入古董描述信息]" else ""
+        example_estimated_period = st.session_state.example_estimated_period if st.session_state.example_estimated_period != "[请在此输入估计年代]" else ""
+        example_estimated_material = st.session_state.example_estimated_material if st.session_state.example_estimated_material != "[请在此输入估计材质]" else ""
+        example_acquisition_info = st.session_state.example_acquisition_info if st.session_state.example_acquisition_info != "[请在此输入获得方式]" else ""
     
     # Two-column layout for input fields
     col1, col2 = st.columns(2)
@@ -908,12 +1089,14 @@ def main():
     with col1:
         manual_title = st.text_input(
             "🏷️ 古董名称/标题 (可选):",
+            value=example_title,
             placeholder="例如：清代康熙青花瓷碗、汉代玉璧、明代铜镜等",
             key=f"manual_title_{st.session_state.reset_trigger}"
         )
         
         manual_description = st.text_area(
             "📄 古董描述信息 (可选):",
+            value=example_description,
             placeholder="请输入古董的详细描述，如：\n- 年代/朝代\n- 材质（陶瓷、玉石、金属等）\n- 尺寸大小\n- 制作工艺",
             height=220,
             key=f"manual_description_{st.session_state.reset_trigger}"
@@ -922,18 +1105,21 @@ def main():
     with col2:
         estimated_period = st.text_input(
             "📅 估计年代:",
+            value=example_estimated_period,
             placeholder="例如：清代、民国、宋代等",
             key=f"estimated_period_{st.session_state.reset_trigger}"
         )
         
         estimated_material = st.text_input(
             "🔍 估计材质:",
+            value=example_estimated_material,
             placeholder="例如：青花瓷、和田玉、青铜等",
             key=f"estimated_material_{st.session_state.reset_trigger}"
         )
         
         acquisition_info = st.text_area(
             "📍 获得方式:",
+            value=example_acquisition_info,
             placeholder="例如：家传、拍卖购买、古玩市场等",
             height=120,
             key=f"acquisition_info_{st.session_state.reset_trigger}"
@@ -972,8 +1158,12 @@ def main():
         st.rerun()
     
     if evaluate_button:
-        if not uploaded_files:
-            st.error("❌ 请至少上传一张古董图片")
+        # Check if we have either uploaded files or example images
+        has_uploaded = uploaded_files and len(uploaded_files) > 0
+        has_examples = hasattr(st.session_state, 'example_images') and st.session_state.example_images
+        
+        if not has_uploaded and not has_examples:
+            st.error("❌ 请至少上传一张古董图片或选择一个试用例子")
             return
         
         # Build description
@@ -989,8 +1179,11 @@ def main():
         
         combined_description = "\n".join(full_description) if full_description else ""
         
-        # Proceed with evaluation
-        process_evaluation_with_uploaded_files(uploaded_files, combined_description, manual_title)
+        # Proceed with evaluation based on input type
+        if has_uploaded:
+            process_evaluation_with_uploaded_files(uploaded_files, combined_description, manual_title)
+        else:
+            process_evaluation_with_example_images(st.session_state.example_images, combined_description, manual_title)
     
     # Enhanced footer with better contrast
     st.markdown("""
@@ -1199,6 +1392,248 @@ def process_evaluation_with_uploaded_files(uploaded_files, description: str, tit
                             st.markdown(f"✅ {uploaded_file.name}")
                         else:
                             st.markdown(f"❌ {uploaded_file.name} (处理失败)")
+                    
+                    st.markdown("**📸 分析方式:**")
+                    st.markdown("- 主要依据：图片视觉证据")
+                    st.markdown("- 辅助参考：用户描述信息")
+                
+                with col2:
+                    st.markdown("**📝 用户提供的参考信息:**")
+                    
+                    # Get original input fields from the function scope
+                    # We need to pass these as parameters to track them properly
+                    if title:
+                        st.markdown(f"• **古董名称/标题:** {title}")
+                    
+                    # Parse the combined description to show individual fields
+                    if description:
+                        desc_lines = description.split('\n')
+                        for line in desc_lines:
+                            if line.strip():
+                                st.markdown(f"• **{line}**")
+                    
+                    if not title and not description:
+                        st.markdown("*未提供文字描述信息*")
+                        st.markdown("*鉴定完全基于图片分析*")
+            
+            # Recommendations
+            st.markdown("### 💡 专业建议")
+            if authenticity_score >= 70:
+                st.info("""
+                **建议后续行动:**
+                - ✅ 可考虑进行实物检测确认
+                - 📚 查阅相关历史文献资料
+                - 🏛️ 咨询博物馆或权威鉴定机构
+                - 📸 拍摄更多细节照片建档
+                """)
+            else:
+                st.warning("""
+                **建议谨慎行动:**
+                - ⚠️ 强烈建议实物专业鉴定
+                - 🔍 重点检查工艺和材质细节
+                - 📖 研究同时期真品对比资料
+                - 💰 如用于交易需多方验证
+                """)
+        else:
+            st.error(f"❌ 评估失败: {result.get('error', result.get('evaluation', '未知错误'))}")
+            st.info("💡 请检查API密钥是否正确，或稍后重试")
+                
+    except Exception as e:
+        logger.error(f"Evaluation error: {e}")
+        st.error(f"❌ 评估过程中发生错误: {str(e)}")
+        st.info("💡 请检查API密钥是否正确，或稍后重试")
+
+def process_evaluation_with_example_images(example_images, description: str, title: str):
+    """Process evaluation using example images with enhanced GPT-o3 analysis progress display"""
+    try:
+        # Create progress container
+        progress_container = st.empty()
+        
+        # Step 1: Initialize evaluator with animation
+        with progress_container.container():
+            st.markdown('''
+            <div class="gpt-o3-analysis-container">
+                <div class="analysis-status">
+                    <span class="analysis-icon">🔧</span>
+                    <span>正在初始化 AI 智能评估器<span class="thinking-dots"></span></span>
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+        
+        evaluator = AntiqueEvaluator()
+        time.sleep(1.5)
+        
+        # Step 2: Process example images
+        with progress_container.container():
+            st.markdown('''
+            <div class="gpt-o3-analysis-container">
+                <div class="analysis-status">
+                    <span class="analysis-icon">📸</span>
+                    <span>正在处理和分析示例图片<span class="thinking-dots"></span></span>
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+        
+        # Convert example images to base64 data URLs
+        image_data_urls = []
+        for i, image_file in enumerate(example_images):
+            data_url = encode_image_file_path(image_file)
+            if data_url:
+                image_data_urls.append(data_url)
+                logger.info(f"Successfully processed example image {i+1}: {image_file}")
+            else:
+                st.warning(f"⚠️ 无法处理示例图片: {image_file}")
+        
+        if not image_data_urls:
+            st.error("❌ 无法处理任何示例图片，请检查图片格式")
+            return
+        
+        time.sleep(1.5)
+        
+        # Step 3: AI Analysis with enhanced animation
+        with progress_container.container():
+            st.markdown('''
+            <div class="gpt-o3-analysis-container">
+                <div style="text-align: center;">
+                    <span class="rotating-brain">🧠</span>
+                    <h2 style="color: #2d3748; margin: 1rem 0;">AI鉴定模型深度分析启动</h2>
+                </div>
+                <div class="deep-analysis-info">
+                    <h3 style="margin: 0 0 1rem 0;">🔬 多维度智能鉴定</h3>
+                    <p style="margin: 0; font-size: 1.1rem;">
+                        正在进行历史文献核对、工艺特征分析、材质科学检测、年代考证验证<br>
+                        <strong>预计耗时1-3分钟，请耐心等待高质量分析结果</strong>
+                    </p>
+                </div>
+                <div class="progress-wave"></div>
+            </div>
+            ''', unsafe_allow_html=True)
+        
+        time.sleep(2)
+        
+        # Step 4: Show AI thinking animation during API call
+        with progress_container.container():
+            st.markdown('''
+            <div class="gpt-o3-analysis-container">
+                <div style="text-align: center;">
+                    <span class="rotating-brain">🧠</span>
+                    <h2 style="color: #2d3748; margin: 1rem 0;">AI鉴定模型正在深度思考中...</h2>
+                </div>
+                <div class="deep-analysis-info">
+                    <h3 style="margin: 0 0 1rem 0;">🔬 AI 智能分析进行中</h3>
+                    <p style="margin: 0; font-size: 1.1rem;">
+                        AI鉴定模型正在运用强大的推理能力分析您的古董<br>
+                        <strong>请耐心等待，分析过程可能需要1-3分钟</strong>
+                    </p>
+                </div>
+                <div class="progress-wave"></div>
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <div style="display: inline-flex; align-items: center; gap: 0.5rem; color: #667eea; font-weight: 600;">
+                        <span style="animation: pulse 1.5s ease-in-out infinite;">💭</span>
+                        <span>深度推理中</span>
+                        <span class="thinking-dots"></span>
+                    </div>
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+        
+        # Start evaluation
+        descriptions = [description] if description else []
+        
+        # Call AI evaluation (this is where the long process happens)
+        result = evaluator.evaluate_antique(
+            uploaded_files=image_data_urls,
+            descriptions=descriptions,
+            title=title
+        )
+        
+        # Step 5: Show analysis phases after API call
+        with progress_container.container():
+            st.markdown('''
+            <div class="gpt-o3-analysis-container">
+                <div class="analysis-phase">
+                    <div class="phase-title">💰 第四阶段：市场价值评估</div>
+                    <div>评估历史价值、艺术价值、市场行情<span class="thinking-dots"></span></div>
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+        
+        time.sleep(1.5)
+        
+        # Show completion
+        with progress_container.container():
+            st.markdown('''
+            <div class="completion-celebration">
+                <h2 style="color: #22543d; margin: 0 0 1rem 0;">🎉 AI鉴定模型分析完成！</h2>
+                <p style="color: #2f855a; margin: 0; font-size: 1.1rem;">
+                    高级AI推理引擎已完成全面分析，正在生成专业鉴定报告...
+                </p>
+            </div>
+            ''', unsafe_allow_html=True)
+        
+        time.sleep(1.5)
+        
+        # Clear progress and show results
+        progress_container.empty()
+        
+        if result["success"]:
+            # Display final results FIRST
+            st.markdown("---")
+            st.markdown("## 🎯 最终鉴定结果")
+            
+            # Get data from JSON response
+            evaluation_data = result.get("data", {})
+            authenticity_score = result["score"]
+            
+            # Display authenticity score with progress bar
+            progress_html = create_authenticity_progress_bar(authenticity_score)
+            st.markdown(progress_html, unsafe_allow_html=True)
+            
+            # Show additional structured information if available
+            if evaluation_data:
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    if evaluation_data.get("category"):
+                        st.markdown(f"**🏺 类型:** {evaluation_data['category']}")
+                
+                with col2:
+                    if evaluation_data.get("period"):
+                        st.markdown(f"**📅 年代:** {evaluation_data['period']}")
+                
+                with col3:
+                    if evaluation_data.get("material"):
+                        st.markdown(f"**🧱 材质:** {evaluation_data['material']}")
+                
+                # Show brief analysis if available
+                if evaluation_data.get("brief_analysis"):
+                    st.markdown(f"**💡 核心判断:** {evaluation_data['brief_analysis']}")
+            
+            # Score interpretation
+            if authenticity_score >= 80:
+                st.success(f"🟢 **高可信度**: 这件古董很可能是真品 ({authenticity_score}%)")
+            elif authenticity_score >= 60:
+                st.warning(f"🟡 **中等可信度**: 需要进一步专业鉴定 ({authenticity_score}%)")
+            elif authenticity_score >= 40:
+                st.warning(f"🟠 **较低可信度**: 存在疑点，建议谨慎 ({authenticity_score}%)")
+            else:
+                st.error(f"🔴 **低可信度**: 可能是仿制品或现代制品 ({authenticity_score}%)")
+            
+            # Then display the detailed evaluation text
+            st.markdown("---")
+            st.markdown("## 🎯 AI鉴定模型专业鉴定报告")
+            
+            # Use the formatted evaluation from the result
+            st.markdown(result["evaluation"], unsafe_allow_html=True)
+            
+            # Display input summary
+            with st.expander("📊 输入信息汇总", expanded=False):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.markdown("**📁 处理的图片:**")
+                    for i, image_file in enumerate(example_images):
+                        st.markdown(f"✅ {image_file}")
                     
                     st.markdown("**📸 分析方式:**")
                     st.markdown("- 主要依据：图片视觉证据")
