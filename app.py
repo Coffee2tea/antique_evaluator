@@ -1043,7 +1043,7 @@ def main():
                                 caption = f"示例图片 {idx + 1}: {filename}"
                             
                             st.markdown('<div class="image-preview">', unsafe_allow_html=True)
-                            st.image(image, caption=caption, use_column_width=True)
+                            st.image(image, caption=caption, use_container_width=True)
                             st.markdown('</div>', unsafe_allow_html=True)
                         except Exception as e:
                             if is_uploaded:
