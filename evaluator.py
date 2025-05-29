@@ -17,7 +17,7 @@ class AntiqueEvaluator:
         self.api_key = OPENAI_API_KEY
         
         if not self.api_key:
-            raise ValueError("OpenAI API key not found. Please set OPENAI_API_KEY in your .env file or environment variables.")
+            raise ValueError("OpenAI API key not found. Please set OPENAI_API_KEY in Streamlit secrets (for cloud deployment) or in your .env file/environment variables (for local development).")
         
         self.client = openai.OpenAI(api_key=self.api_key)
         

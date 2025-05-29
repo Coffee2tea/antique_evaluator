@@ -7,10 +7,19 @@ load_dotenv()
 
 # OpenAI Configuration
 # Try to get API key from Streamlit secrets first, then fallback to environment variables
+OPENAI_API_KEY = None
 try:
     OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
-except (KeyError, FileNotFoundError):
+    print(f"✅ Loaded API key from Streamlit secrets: {OPENAI_API_KEY[:10]}..." if OPENAI_API_KEY else "❌ API key from secrets is empty")
+except (KeyError, FileNotFoundError, AttributeError) as e:
+    print(f"⚠️ Could not load from Streamlit secrets ({type(e).__name__}), trying environment variables...")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    print(f"✅ Loaded API key from environment: {OPENAI_API_KEY[:10]}..." if OPENAI_API_KEY else "❌ No API key found in environment")
+except Exception as e:
+    print(f"❌ Unexpected error loading secrets: {e}")
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+print(f"🔑 Final API key status: {'✅ Available' if OPENAI_API_KEY else '❌ Not found'}")
 
 # App Configuration
 APP_TITLE = "🏺 AI古董鉴定专家"
