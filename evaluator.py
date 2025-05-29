@@ -563,7 +563,7 @@ class AntiqueEvaluator:
         return text 
 
     def format_evaluation_report(self, report_text: str) -> str:
-        """Format the evaluation report with elegant, professional styling for all content"""
+        """Format the evaluation report with structured simple styling"""
         if not report_text:
             return ""
         
@@ -585,35 +585,15 @@ class AntiqueEvaluator:
             
             # Main sections (一、二、三、四、)
             if any(keyword in line for keyword in ['一、', '二、', '三、', '四、', '第一', '第二', '第三', '第四']):
-                if '一、' in line or '第一' in line:
-                    icon = '🔍'
-                    color = '#2563eb'
-                elif '二、' in line or '第二' in line:
-                    icon = '⚙️'
-                    color = '#059669'
-                elif '三、' in line or '第三' in line:
-                    icon = '📊'
-                    color = '#d97706'
-                elif '四、' in line or '第四' in line:
-                    icon = '💰'
-                    color = '#7c3aed'
-                else:
-                    icon = '📋'
-                    color = '#4b5563'
-                
-                section_html = f'''
-<div style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-left: 5px solid {color}; margin: 2rem 0; padding: 2rem; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-<h2 style="color: {color}; margin: 0 0 1.5rem 0; font-size: 1.6rem; font-weight: 800; display: flex; align-items: center; gap: 1rem;">
-<span style="font-size: 2rem; background: rgba(59, 130, 246, 0.1); padding: 0.75rem; border-radius: 16px;">{icon}</span>
-{line}
-</h2>
-'''
-                content_parts.append(section_html)
+                content_parts.append(f'''
+<div style="margin: 1.5rem 0; padding: 1.5rem; border: 2px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb;">
+<h2 style="margin: 0 0 1rem 0; padding: 0; font-weight: bold; font-size: 1.3rem; color: #1f2937; border-bottom: 1px solid #d1d5db; padding-bottom: 0.5rem;">{line}</h2>
+''')
                 
             elif line.startswith('**') and line.endswith('**'):
                 # Subsection headers
                 subsection = line[2:-2]
-                content_parts.append(f'<h3 style="color: #1f2937; margin: 2rem 0 1rem 0; font-size: 1.3rem; font-weight: 700; padding: 1rem 1.5rem; background: #f8fafc; border-radius: 12px; border-left: 4px solid #3b82f6;">{subsection}</h3>')
+                content_parts.append(f'<h3 style="margin: 1rem 0 0.5rem 0; font-weight: bold; font-size: 1.1rem; color: #374151;">{subsection}</h3>')
                 
             elif ':' in line and len(line.split(':')[0]) < 35:
                 # Key-value pairs
@@ -621,86 +601,70 @@ class AntiqueEvaluator:
                 if len(parts) == 2:
                     key = parts[0].strip()
                     value = parts[1].strip()
-                    kv_html = f'''
-<div style="margin: 1.5rem 0; padding: 1.5rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 3px 12px rgba(0,0,0,0.06);">
-<div style="font-weight: 800; color: #1e40af; font-size: 1.1rem; margin-bottom: 0.5rem;">{key}</div>
-<div style="color: #374151; font-size: 1.05rem; line-height: 1.8; padding-left: 1rem; border-left: 3px solid #e2e8f0;">{value}</div>
-</div>'''
-                    content_parts.append(kv_html)
+                    content_parts.append(f'''
+<div style="margin: 0.5rem 0; padding: 0.75rem; border-left: 3px solid #3b82f6; background-color: #f8fafc;">
+<div style="font-weight: bold; color: #1e40af; margin-bottom: 0.25rem;">{key}</div>
+<div style="color: #374151;">{value}</div>
+</div>''')
                 else:
-                    content_parts.append(f'<p style="margin: 1rem 0; line-height: 1.8; color: #374151; font-size: 1.1rem; font-weight: 500;">{line}</p>')
+                    content_parts.append(f'<p style="margin: 0.5rem 0; padding: 0.5rem; color: #374151;">{line}</p>')
                 
             elif line.startswith('结论') or '真品可能性' in line or '综合判断' in line:
                 # Conclusions
-                conclusion_html = f'''
-<div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 3px solid #f59e0b; border-radius: 16px; padding: 2rem; margin: 2rem 0; box-shadow: 0 8px 25px rgba(245, 158, 11, 0.15);">
-<div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-<span style="font-size: 2rem; background: #ffffff; padding: 0.75rem; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">⚖️</span>
-<h3 style="color: #92400e; margin: 0; font-size: 1.3rem; font-weight: 700;">专业鉴定结论</h3>
-</div>
-<p style="margin: 0; color: #92400e; font-weight: 700; font-size: 1.1rem; line-height: 1.7;">{line}</p>
-</div>'''
-                content_parts.append(conclusion_html)
+                content_parts.append(f'''
+<div style="margin: 1rem 0; padding: 1rem; border: 2px solid #f59e0b; border-radius: 6px; background-color: #fefbf3;">
+<div style="font-weight: bold; color: #92400e; margin-bottom: 0.5rem;">🏆 鉴定结论</div>
+<p style="margin: 0; color: #92400e; font-weight: bold;">{line}</p>
+</div>''')
                 
             elif line.startswith('建议') or '注意事项' in line:
                 # Recommendations
-                rec_html = f'''
-<div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #10b981; border-radius: 16px; padding: 2rem; margin: 2rem 0;">
-<div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-<span style="font-size: 1.8rem;">💡</span>
-<h4 style="color: #065f46; margin: 0; font-size: 1.2rem; font-weight: 700;">专业建议</h4>
-</div>
-<p style="margin: 0; color: #065f46; font-weight: 600; font-size: 1.1rem; line-height: 1.7;">{line}</p>
-</div>'''
-                content_parts.append(rec_html)
+                content_parts.append(f'''
+<div style="margin: 1rem 0; padding: 1rem; border: 2px solid #10b981; border-radius: 6px; background-color: #f0fdf4;">
+<div style="font-weight: bold; color: #065f46; margin-bottom: 0.5rem;">💡 专业建议</div>
+<p style="margin: 0; color: #065f46; font-weight: bold;">{line}</p>
+</div>''')
                 
             else:
                 # Regular paragraphs
-                if len(line) > 100:
-                    content_parts.append(f'<div style="margin: 1.5rem 0; padding: 1.5rem; background: #fefefe; border-radius: 12px; border-left: 3px solid #e2e8f0;"><p style="margin: 0; line-height: 1.9; color: #374151; font-size: 1.1rem; font-weight: 500;">{line}</p></div>')
-                else:
-                    content_parts.append(f'<p style="margin: 1rem 0; line-height: 1.8; color: #374151; font-size: 1.1rem; font-weight: 500;">{line}</p>')
+                content_parts.append(f'<p style="margin: 0.5rem 0; padding: 0.25rem; line-height: 1.6; color: #374151;">{line}</p>')
         
-        # Close any open divs
-        if content_parts and '<div style="background: linear-gradient' in content_parts[-1] and not content_parts[-1].endswith('</div>'):
+        # Close any open section divs
+        if content_parts and '<div style="margin: 1.5rem 0; padding: 1.5rem; border: 2px solid #e5e7eb' in str(content_parts):
             content_parts.append('</div>')
         
         content = '\n'.join(content_parts)
         
-        # Create the full report
+        # Create the structured simple report
         return f'''
-<div style="font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 100%; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.12); border: 1px solid #e2e8f0;">
+<div style="max-width: 100%; margin: 0 auto; font-family: system-ui, -apple-system, sans-serif;">
 
-<div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1d4ed8 100%); color: white; padding: 3rem 2.5rem; text-align: center;">
-<div style="font-size: 3.5rem; margin-bottom: 1rem;">🏛️</div>
-<h1 style="margin: 0; font-size: 2.4rem; font-weight: 800; margin-bottom: 0.75rem;">专业古董文物鉴定报告</h1>
-<div style="font-size: 1.2rem; opacity: 0.95; font-weight: 600;">基于人工智能深度学习技术的综合分析评估</div>
-<div style="margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.15); border-radius: 50px; display: inline-block; font-size: 1rem; font-weight: 600;">📅 生成时间: {timestamp}</div>
+<!-- Header Section -->
+<div style="text-align: center; margin-bottom: 2rem; padding: 2rem; border: 2px solid #3b82f6; border-radius: 10px; background-color: #eff6ff;">
+<h1 style="margin: 0 0 0.5rem 0; font-size: 1.8rem; font-weight: bold; color: #1e40af;">🏺 古董文物鉴定报告</h1>
+<p style="margin: 0; color: #3730a3; font-weight: 600;">AI智能分析评估</p>
+<div style="margin-top: 1rem; padding: 0.5rem 1rem; background-color: #dbeafe; border-radius: 20px; display: inline-block;">
+<span style="color: #1e40af; font-size: 0.9rem; font-weight: 600;">📅 {timestamp}</span>
+</div>
 </div>
 
-<div style="padding: 3rem 2.5rem; background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);">
+<!-- Content Section -->
+<div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 2rem;">
 {content}
 </div>
 
-<div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 2.5rem; border-top: 1px solid #e2e8f0; text-align: center;">
-<div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #10b981; border-radius: 16px; padding: 2rem; margin-bottom: 2rem;">
-<div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1rem;">
-<span style="font-size: 1.5rem;">⚠️</span>
-<h3 style="color: #065f46; margin: 0; font-size: 1.2rem; font-weight: 700;">重要声明</h3>
+<!-- Footer Section -->
+<div style="margin-top: 2rem; padding: 1.5rem; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; text-align: center;">
+<div style="padding: 1rem; border: 1px solid #d1d5db; border-radius: 6px; background-color: #ffffff;">
+<p style="margin: 0; color: #374151; font-size: 0.9rem;">
+<strong style="color: #dc2626;">⚠️ 重要声明：</strong> 
+本报告基于AI深度学习分析生成，仅供专业参考。最终鉴定结果需结合实物检测，建议咨询权威古董鉴定机构进行确认。
+</p>
 </div>
-<p style="margin: 0; color: #065f46; font-size: 1rem; line-height: 1.6; font-weight: 600;">本报告基于AI深度学习分析生成，仅供专业参考。最终鉴定结果需结合实物检测，建议咨询权威古董鉴定机构进行确认。</p>
-</div>
-
-<div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; color: #6b7280; font-size: 0.9rem; font-weight: 500;">
-<div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.7); border-radius: 25px; border: 1px solid #e2e8f0;">
-<span>🤖</span><span>GPT-o3 AI鉴定模型</span>
-</div>
-<div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.7); border-radius: 25px; border: 1px solid #e2e8f0;">
-<span>🔒</span><span>数据安全保护</span>
-</div>
-<div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.7); border-radius: 25px; border: 1px solid #e2e8f0;">
-<span>🏺</span><span>专业古董鉴定</span>
-</div>
+<div style="margin-top: 1rem; color: #6b7280; font-size: 0.8rem;">
+<span style="margin: 0 1rem;">🤖 GPT-o3</span>
+<span style="margin: 0 1rem;">🔒 安全</span>
+<span style="margin: 0 1rem;">🏺 专业</span>
 </div>
 </div>
 
