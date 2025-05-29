@@ -128,7 +128,7 @@ def encode_uploaded_image(uploaded_file) -> str:
         return None
 
 def format_evaluation_report(report_text: str) -> str:
-    """Format the evaluation report with professional styling"""
+    """Format the evaluation report with enhanced professional styling"""
     if not report_text:
         return ""
     
@@ -141,21 +141,39 @@ def format_evaluation_report(report_text: str) -> str:
         if not line:
             continue
             
-        # Format headers and sections
-        if any(keyword in line for keyword in ['第一步', '第二步', '第三步', '第四步', '基础信息', '工艺技术', '真伪判断', '市场价值', '总结']):
+        # Detect major section headers (第一步, 第二步, etc.)
+        if any(keyword in line for keyword in ['第一步', '第二步', '第三步', '第四步', '第五步']):
+            formatted_lines.append(f'<h2 class="report-major-section">{line}</h2>')
+        
+        # Detect main section headers
+        elif any(keyword in line for keyword in ['基础信息识别', '工艺技术分析', '真伪综合判断', '市场价值评估', '综合结论', '最终建议', '总结评估']):
             formatted_lines.append(f'<h3 class="report-section-header">{line}</h3>')
-        elif line.startswith('**') and line.endswith('**'):
-            # Format bold sections
-            formatted_lines.append(f'<h4 class="report-subsection">{line[2:-2]}</h4>')
-        elif ':' in line and len(line.split(':')[0]) < 20:
-            # Format key-value pairs
+        
+        # Detect subsection headers (usually with ** or specific patterns)
+        elif (line.startswith('**') and line.endswith('**')) or any(keyword in line.lower() for keyword in ['朝代分析', '类型识别', '材质判断', '工艺特征', '制作技法', '时代特征', '真伪分析', '可信度评估', '历史价值', '艺术价值', '市场行情', '投资建议']):
+            clean_line = line.replace('**', '').strip()
+            formatted_lines.append(f'<h4 class="report-subsection">{clean_line}</h4>')
+        
+        # Detect key-value pairs with better formatting
+        elif ':' in line and len(line.split(':')[0]) < 25:
             parts = line.split(':', 1)
             if len(parts) == 2:
-                formatted_lines.append(f'<div class="report-item"><span class="report-label">{parts[0]}:</span><span class="report-value">{parts[1].strip()}</span></div>')
+                key = parts[0].strip().replace('**', '')
+                value = parts[1].strip()
+                formatted_lines.append(f'<div class="report-item"><span class="report-label">{key}:</span><span class="report-value">{value}</span></div>')
             else:
                 formatted_lines.append(f'<p class="report-paragraph">{line}</p>')
+        
+        # Detect numbered points or bullet points
+        elif line.startswith(('1.', '2.', '3.', '4.', '5.', '•', '-', '⚠️', '✅', '❌', '💡', '🔍')):
+            formatted_lines.append(f'<div class="report-point">{line}</div>')
+        
+        # Detect score/rating lines
+        elif any(keyword in line.lower() for keyword in ['可信度', '评分', '分数', '%', '星级']):
+            formatted_lines.append(f'<div class="report-score">{line}</div>')
+        
+        # Regular paragraph
         else:
-            # Regular paragraph
             formatted_lines.append(f'<p class="report-paragraph">{line}</p>')
     
     # Wrap in professional container
@@ -164,8 +182,8 @@ def format_evaluation_report(report_text: str) -> str:
     return f"""
     <div class="professional-report-container">
         <div class="report-header">
-            <h2 class="report-title">📋 专业古董鉴定分析报告</h2>
-            <div class="report-meta">基于AI深度学习技术的综合评估</div>
+            <h2 class="report-title">📋 AI专业鉴定分析报告</h2>
+            <div class="report-meta">基于GPT-o3深度推理引擎的综合评估</div>
         </div>
         <div class="report-content">
             {formatted_content}
@@ -761,13 +779,13 @@ def main():
         100% { transform: scale(1); opacity: 1; }
     }
     
-    /* Professional Report Styling */
+    /* Professional Report Styling - Enhanced */
     .professional-report-container {
         background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        border-radius: 20px;
+        border-radius: 24px;
         padding: 0;
         margin: 2rem 0;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.08);
         border: 1px solid #e2e8f0;
         overflow: hidden;
         font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -775,76 +793,131 @@ def main():
     
     .report-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
+        padding: 2.5rem 2rem;
         color: white;
         text-align: center;
+        position: relative;
+    }
+    
+    .report-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.1) 0%, transparent 50%);
+        pointer-events: none;
     }
     
     .report-title {
         margin: 0 0 0.5rem 0;
-        font-size: 1.8rem;
+        font-size: 2rem;
         font-weight: 700;
         color: white !important;
         text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        position: relative;
+        z-index: 1;
     }
     
     .report-meta {
-        font-size: 1rem;
-        opacity: 0.9;
+        font-size: 1.1rem;
+        opacity: 0.95;
         font-weight: 500;
+        position: relative;
+        z-index: 1;
     }
     
     .report-content {
-        padding: 2.5rem;
+        padding: 3rem 2.5rem;
         line-height: 1.8;
+        max-width: none;
     }
     
-    .report-section-header {
-        color: #2d3748 !important;
-        font-size: 1.4rem !important;
-        font-weight: 700 !important;
-        margin: 2rem 0 1rem 0 !important;
-        padding: 0.75rem 1.5rem;
-        background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
-        border-radius: 12px;
-        border-left: 4px solid #667eea;
+    /* Major Section Headers - Largest and most prominent */
+    .report-major-section {
+        color: #1a202c !important;
+        font-size: 1.75rem !important;
+        font-weight: 800 !important;
+        margin: 2.5rem 0 1.5rem 0 !important;
+        padding: 1.25rem 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white !important;
+        border-radius: 16px;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.75rem;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+        transform: translateX(0);
+        transition: all 0.3s ease;
     }
     
+    /* Section Headers - Bold and prominent */
+    .report-section-header {
+        color: #2d3748 !important;
+        font-size: 1.5rem !important;
+        font-weight: 750 !important;
+        margin: 2rem 0 1.25rem 0 !important;
+        padding: 1rem 1.75rem;
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border-radius: 14px;
+        border-left: 6px solid #667eea;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    
+    /* Subsection Headers - Medium prominence */
     .report-subsection {
         color: #4a5568 !important;
-        font-size: 1.2rem !important;
-        font-weight: 600 !important;
-        margin: 1.5rem 0 0.75rem 0 !important;
-        padding: 0.5rem 0;
-        border-bottom: 2px solid #e2e8f0;
+        font-size: 1.25rem !important;
+        font-weight: 650 !important;
+        margin: 1.75rem 0 1rem 0 !important;
+        padding: 0.75rem 1.25rem;
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.08) 0%, rgba(102, 126, 234, 0.03) 100%);
+        border-radius: 10px;
+        border-left: 4px solid #a78bfa;
+        position: relative;
     }
     
+    .report-subsection::before {
+        content: '▸';
+        color: #667eea;
+        font-size: 1.1rem;
+        margin-right: 0.5rem;
+        font-weight: bold;
+    }
+    
+    /* Regular paragraphs */
     .report-paragraph {
         color: #2d3748 !important;
         font-size: 1.1rem !important;
         line-height: 1.8 !important;
-        margin: 1rem 0 !important;
+        margin: 1.2rem 0 !important;
         text-align: justify;
         text-justify: inter-ideograph;
+        padding: 0 0.5rem;
     }
     
+    /* Key-value items */
     .report-item {
-        margin: 0.75rem 0;
-        padding: 0.75rem 1rem;
-        background: rgba(102, 126, 234, 0.05);
-        border-radius: 8px;
-        border-left: 3px solid #667eea;
+        margin: 1rem 0;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.06) 0%, rgba(102, 126, 234, 0.03) 100%);
+        border-radius: 12px;
+        border-left: 4px solid #667eea;
+        box-shadow: 0 1px 8px rgba(0,0,0,0.04);
     }
     
     .report-label {
         color: #4a5568 !important;
-        font-weight: 600 !important;
+        font-weight: 650 !important;
         font-size: 1.05rem !important;
         display: inline-block;
-        min-width: 120px;
+        min-width: 140px;
     }
     
     .report-value {
@@ -852,23 +925,54 @@ def main():
         font-size: 1.05rem !important;
         margin-left: 0.5rem;
         line-height: 1.6;
+        font-weight: 500;
+    }
+    
+    /* Bullet points and numbered lists */
+    .report-point {
+        color: #2d3748 !important;
+        font-size: 1.05rem !important;
+        margin: 0.75rem 0;
+        padding: 0.75rem 1.25rem;
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.04) 0%, transparent 100%);
+        border-radius: 8px;
+        border-left: 3px solid #a78bfa;
+        line-height: 1.6;
+    }
+    
+    /* Score and rating highlights */
+    .report-score {
+        color: #2d3748 !important;
+        font-size: 1.15rem !important;
+        font-weight: 600 !important;
+        margin: 1rem 0;
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+        border-radius: 12px;
+        border: 2px solid #68d391;
+        text-align: center;
+        box-shadow: 0 2px 12px rgba(104, 211, 145, 0.2);
     }
     
     .report-footer {
-        background: #f7fafc;
-        padding: 1.5rem 2.5rem;
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        padding: 2rem 2.5rem;
         border-top: 1px solid #e2e8f0;
     }
     
     .disclaimer {
         color: #718096 !important;
-        font-size: 0.95rem !important;
+        font-size: 1rem !important;
         text-align: center;
         font-style: italic;
-        line-height: 1.5;
+        line-height: 1.6;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 10px;
+        border: 1px solid rgba(113, 128, 150, 0.2);
     }
     
-    /* Enhanced readability */
+    /* Enhanced typography hierarchy */
     .professional-report-container h1,
     .professional-report-container h2,
     .professional-report-container h3,
@@ -876,6 +980,7 @@ def main():
     .professional-report-container h5,
     .professional-report-container h6 {
         font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif !important;
+        letter-spacing: -0.01em;
     }
     
     .professional-report-container p,
@@ -888,27 +993,48 @@ def main():
     @media (max-width: 768px) {
         .professional-report-container {
             margin: 1rem 0;
+            border-radius: 16px;
         }
         
         .report-header {
-            padding: 1.5rem;
+            padding: 2rem 1.5rem;
         }
         
         .report-title {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
         }
         
         .report-content {
-            padding: 1.5rem;
+            padding: 2rem 1.5rem;
+        }
+        
+        .report-major-section {
+            font-size: 1.4rem !important;
+            padding: 1rem 1.5rem;
+            margin: 2rem 0 1rem 0 !important;
         }
         
         .report-section-header {
-            font-size: 1.2rem !important;
-            padding: 0.5rem 1rem;
+            font-size: 1.3rem !important;
+            padding: 0.75rem 1.25rem;
+            margin: 1.5rem 0 1rem 0 !important;
+        }
+        
+        .report-subsection {
+            font-size: 1.15rem !important;
+            padding: 0.6rem 1rem;
         }
         
         .report-paragraph {
-            font-size: 1rem !important;
+            font-size: 1.05rem !important;
+        }
+        
+        .report-item {
+            padding: 0.75rem 1rem;
+        }
+        
+        .report-point {
+            padding: 0.6rem 1rem;
         }
     }
     </style>
