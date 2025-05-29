@@ -128,7 +128,7 @@ def encode_uploaded_image(uploaded_file) -> str:
         return None
 
 def format_evaluation_report(report_text: str) -> str:
-    """Format the evaluation report with clean, elegant styling"""
+    """Format the evaluation report with simple, clean, professional styling"""
     if not report_text:
         return ""
     
@@ -139,61 +139,56 @@ def format_evaluation_report(report_text: str) -> str:
     for line in lines:
         line = line.strip()
         if not line:
-            formatted_lines.append('<br>')
+            formatted_lines.append('<div class="report-spacer"></div>')
             continue
             
         # Detect major section headers (第一步, 第二步, etc.)
         if any(keyword in line for keyword in ['第一步', '第二步', '第三步', '第四步', '第五步']):
-            formatted_lines.append(f'<h2 class="report-major-title">{line}</h2>')
+            formatted_lines.append(f'<h2 class="report-section-header">{line}</h2>')
         
-        # Detect main section headers
+        # Detect main category headers
         elif any(keyword in line for keyword in ['基础信息识别', '工艺技术分析', '真伪综合判断', '市场价值评估', '综合结论', '最终建议', '总结评估']):
-            formatted_lines.append(f'<h3 class="report-section-title">{line}</h3>')
+            formatted_lines.append(f'<h3 class="report-category-header">{line}</h3>')
         
         # Detect elegant subtitles with brackets 【】or special keywords
         elif ('【' in line and '】' in line) or any(keyword in line for keyword in ['图像观察', '工艺分析', '材质检测', '时代特征', '真伪判断', '市场评估', '投资建议', '保存建议', '收藏价值']):
-            formatted_lines.append(f'<h4 class="report-elegant-subtitle">{line}</h4>')
+            formatted_lines.append(f'<h4 class="report-subtitle">{line}</h4>')
         
-        # Detect subsection headers (usually with ** or specific patterns)
-        elif (line.startswith('**') and line.endswith('**')) or any(keyword in line.lower() for keyword in ['朝代分析', '类型识别', '材质判断', '工艺特征', '制作技法', '时代特征', '真伪分析', '可信度评估', '历史价值', '艺术价值', '市场行情']):
-            clean_line = line.replace('**', '').strip()
-            formatted_lines.append(f'<h5 class="report-subtitle">{clean_line}</h5>')
-        
-        # Detect key-value pairs
-        elif ':' in line and len(line.split(':')[0]) < 25:
+        # Detect key-value pairs or labeled information
+        elif ':' in line and len(line.split(':')[0]) < 20:
             parts = line.split(':', 1)
             if len(parts) == 2:
                 key = parts[0].strip().replace('**', '')
                 value = parts[1].strip()
-                formatted_lines.append(f'<p class="report-detail"><strong>{key}:</strong> {value}</p>')
+                formatted_lines.append(f'<div class="report-info-item"><span class="report-label">{key}:</span> <span class="report-value">{value}</span></div>')
             else:
-                formatted_lines.append(f'<p class="report-text">{line}</p>')
+                formatted_lines.append(f'<p class="report-paragraph">{line}</p>')
         
         # Detect numbered points or bullet points
         elif line.startswith(('1.', '2.', '3.', '4.', '5.', '•', '-', '⚠️', '✅', '❌', '💡', '🔍')):
-            formatted_lines.append(f'<p class="report-point">{line}</p>')
+            formatted_lines.append(f'<div class="report-list-item">{line}</div>')
         
         # Detect score/rating lines
         elif any(keyword in line.lower() for keyword in ['可信度', '评分', '分数', '%', '星级']):
-            formatted_lines.append(f'<p class="report-highlight">{line}</p>')
+            formatted_lines.append(f'<div class="report-score-item">{line}</div>')
         
         # Regular paragraph
         else:
-            formatted_lines.append(f'<p class="report-text">{line}</p>')
+            formatted_lines.append(f'<p class="report-paragraph">{line}</p>')
     
-    # Create clean, elegant report
+    # Create clean, simple report layout
     formatted_content = '\n'.join(formatted_lines)
     
     return f"""
-    <div class="elegant-report">
-        <div class="report-header">
-            <h1 class="report-main-title">📋 AI专业鉴定分析报告</h1>
-            <p class="report-subtitle-meta">基于GPT-o3深度推理引擎的综合评估</p>
+    <div class="clean-report">
+        <div class="report-header-section">
+            <h1 class="report-main-title">📋 专业古董鉴定分析报告</h1>
+            <p class="report-subtitle-line">基于最先进多模态多专家思维链AI模型</p>
         </div>
-        <div class="report-body">
+        <div class="report-content-section">
             {formatted_content}
         </div>
-        <div class="report-footer">
+        <div class="report-footer-section">
             <p class="report-disclaimer">⚠️ 本报告仅供参考，最终鉴定结果需结合实物检测。建议咨询专业古董鉴定机构进行确认。</p>
         </div>
     </div>
@@ -1243,6 +1238,250 @@ def main():
             font-size: 1.1rem;
         }
     }
+    
+    /* Simple, Clean Report Styling - No Cards */
+    .simple-report {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 2rem 0;
+        font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.7;
+        color: #2d3748;
+        background: none;
+    }
+    
+    .report-main-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #1a202c;
+        margin: 0 0 1rem 0;
+        text-align: center;
+        font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+        letter-spacing: -0.02em;
+    }
+    
+    .report-subtitle-meta {
+        font-size: 1.1rem;
+        color: #718096;
+        margin: 0 0 2rem 0;
+        text-align: center;
+        font-weight: 500;
+    }
+    
+    .report-divider {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, #e2e8f0 20%, #e2e8f0 80%, transparent 100%);
+        margin: 2rem 0;
+    }
+    
+    .report-disclaimer {
+        font-size: 0.95rem;
+        color: #718096;
+        margin: 2rem 0 0 0;
+        font-style: italic;
+        line-height: 1.6;
+        text-align: center;
+        padding: 1rem;
+        background: rgba(113, 128, 150, 0.05);
+        border-radius: 8px;
+        border: 1px solid rgba(113, 128, 150, 0.1);
+    }
+    
+    /* Clean, Simple Report Styling */
+    .clean-report {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.6;
+        color: #1a1a1a;
+        background: #ffffff;
+    }
+    
+    /* Header Section */
+    .report-header-section {
+        text-align: center;
+        padding: 2rem 0 3rem 0;
+        border-bottom: 3px solid #e5e7eb;
+        margin-bottom: 3rem;
+    }
+    
+    .report-main-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #111827;
+        margin: 0 0 1rem 0;
+        letter-spacing: -0.025em;
+        text-align: center;
+    }
+    
+    .report-subtitle-line {
+        font-size: 1.1rem;
+        color: #6b7280;
+        margin: 0;
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    /* Content Section */
+    .report-content-section {
+        padding: 0 1rem;
+    }
+    
+    /* Section Headers - Most Prominent */
+    .report-section-header {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 3rem 0 1.5rem 0;
+        padding: 1rem 0 0.5rem 0;
+        border-bottom: 2px solid #3b82f6;
+        text-align: left;
+        letter-spacing: -0.01em;
+    }
+    
+    /* Category Headers - Secondary Level */
+    .report-category-header {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #374151;
+        margin: 2.5rem 0 1.2rem 0;
+        padding: 0.8rem 0 0.4rem 0;
+        border-bottom: 1px solid #d1d5db;
+        text-align: left;
+    }
+    
+    /* Subtitles - Third Level */
+    .report-subtitle {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #4b5563;
+        margin: 2rem 0 1rem 0;
+        padding: 0.5rem 0;
+        text-align: left;
+        position: relative;
+    }
+    
+    .report-subtitle::before {
+        content: "▶";
+        color: #3b82f6;
+        margin-right: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Paragraph Text */
+    .report-paragraph {
+        font-size: 1rem;
+        line-height: 1.7;
+        color: #374151;
+        margin: 1rem 0;
+        text-align: justify;
+        text-justify: inter-word;
+    }
+    
+    /* Info Items (Key-Value Pairs) */
+    .report-info-item {
+        margin: 0.8rem 0;
+        padding: 0.5rem 0;
+        border-left: 3px solid #e5e7eb;
+        padding-left: 1rem;
+    }
+    
+    .report-label {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 1rem;
+    }
+    
+    .report-value {
+        color: #374151;
+        font-size: 1rem;
+        margin-left: 0.5rem;
+    }
+    
+    /* List Items */
+    .report-list-item {
+        margin: 0.6rem 0;
+        padding: 0.4rem 0;
+        color: #374151;
+        font-size: 1rem;
+        line-height: 1.6;
+        padding-left: 1.5rem;
+        position: relative;
+    }
+    
+    /* Score Items */
+    .report-score-item {
+        margin: 1rem 0;
+        padding: 0.8rem 1.2rem;
+        background: #f8fafc;
+        border-left: 4px solid #10b981;
+        border-radius: 0 8px 8px 0;
+        font-weight: 600;
+        color: #065f46;
+        font-size: 1.05rem;
+    }
+    
+    /* Spacer */
+    .report-spacer {
+        height: 1rem;
+    }
+    
+    /* Footer Section */
+    .report-footer-section {
+        margin-top: 3rem;
+        padding: 2rem 0;
+        border-top: 2px solid #e5e7eb;
+        text-align: center;
+    }
+    
+    .report-disclaimer {
+        font-size: 0.95rem;
+        color: #6b7280;
+        margin: 0;
+        font-style: italic;
+        line-height: 1.6;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .clean-report {
+            margin: 1rem;
+            max-width: none;
+        }
+        
+        .report-header-section {
+            padding: 1.5rem 0 2rem 0;
+        }
+        
+        .report-main-title {
+            font-size: 2rem;
+        }
+        
+        .report-content-section {
+            padding: 0 0.5rem;
+        }
+        
+        .report-section-header {
+            font-size: 1.5rem;
+            margin: 2.5rem 0 1.2rem 0;
+        }
+        
+        .report-category-header {
+            font-size: 1.25rem;
+            margin: 2rem 0 1rem 0;
+        }
+        
+        .report-subtitle {
+            font-size: 1.1rem;
+            margin: 1.5rem 0 0.8rem 0;
+        }
+    }
     </style>
     """, unsafe_allow_html=True)
     
@@ -1459,13 +1698,13 @@ def main():
     
     # Add clarification about the role of text inputs
     st.info("""
-    💡 **说明**: 以上文字信息将作为参考背景提供给AI鉴定模型。
+    💡 **说明**: 以上文字信息将作为参考背景提供给专业鉴定系统。
     
     📸 **主要鉴定依据**: 图片中的视觉证据（工艺、材质、细节等）
     
     📝 **辅助参考信息**: 您提供的文字描述
     
-    🔍 **分析方式**: AI将首先基于图片进行独立分析，然后对比您的描述信息，指出一致性或差异。
+    🔍 **分析方式**: 系统将首先基于图片进行独立分析，然后对比您的描述信息，指出一致性或差异。
     """)
     
     # Button section with evaluation and reset buttons
@@ -1542,7 +1781,7 @@ def process_evaluation_with_uploaded_files(uploaded_files, description: str, tit
             <div class="gpt-o3-analysis-container">
                 <div class="analysis-status">
                     <span class="analysis-icon">🔧</span>
-                    <span>正在初始化 AI 智能评估器<span class="thinking-dots"></span></span>
+                    <span>正在初始化专业评估系统<span class="thinking-dots"></span></span>
                 </div>
             </div>
             ''', unsafe_allow_html=True)
@@ -1583,7 +1822,7 @@ def process_evaluation_with_uploaded_files(uploaded_files, description: str, tit
             <div class="gpt-o3-analysis-container">
                 <div style="text-align: center;">
                     <span class="rotating-brain">🧠</span>
-                    <h2 style="color: #2d3748; margin: 1rem 0;">AI鉴定模型深度分析启动</h2>
+                    <h2 style="color: #2d3748; margin: 1rem 0;">专业鉴定系统深度分析启动</h2>
                 </div>
                 <div class="deep-analysis-info">
                     <h3 style="margin: 0 0 1rem 0;">🔬 多维度智能鉴定</h3>
@@ -1604,12 +1843,12 @@ def process_evaluation_with_uploaded_files(uploaded_files, description: str, tit
             <div class="gpt-o3-analysis-container">
                 <div style="text-align: center;">
                     <span class="rotating-brain">🧠</span>
-                    <h2 style="color: #2d3748; margin: 1rem 0;">AI鉴定模型正在深度思考中...</h2>
+                    <h2 style="color: #2d3748; margin: 1rem 0;">专业鉴定系统正在深度思考中...</h2>
                 </div>
                 <div class="deep-analysis-info">
-                    <h3 style="margin: 0 0 1rem 0;">🔬 AI 智能分析进行中</h3>
+                    <h3 style="margin: 0 0 1rem 0;">🔬 智能分析进行中</h3>
                     <p style="margin: 0; font-size: 1.1rem;">
-                        AI鉴定模型正在运用强大的推理能力分析您的古董<br>
+                        专业鉴定系统正在运用先进算法分析您的古董<br>
                         <strong>请耐心等待，分析过程可能需要1-3分钟</strong>
                     </p>
                 </div>
@@ -1651,9 +1890,9 @@ def process_evaluation_with_uploaded_files(uploaded_files, description: str, tit
         with progress_container.container():
             st.markdown('''
             <div class="completion-celebration">
-                <h2 style="color: #22543d; margin: 0 0 1rem 0;">🎉 AI鉴定模型分析完成！</h2>
+                <h2 style="color: #22543d; margin: 0 0 1rem 0;">🎉 专业鉴定分析完成！</h2>
                 <p style="color: #2f855a; margin: 0; font-size: 1.1rem;">
-                    高级AI推理引擎已完成全面分析，正在生成专业鉴定报告...
+                    专业鉴定系统已完成全面分析，正在生成详细报告...
                 </p>
             </div>
             ''', unsafe_allow_html=True)
@@ -1708,7 +1947,7 @@ def process_evaluation_with_uploaded_files(uploaded_files, description: str, tit
             
             # Then display the detailed evaluation text
             st.markdown("---")
-            st.markdown("## 🎯 AI鉴定模型专业鉴定报告")
+            st.markdown("## 📋 专业古董鉴定详细报告")
             
             # Use the formatted evaluation from the result
             st.markdown(result["evaluation"], unsafe_allow_html=True)
@@ -1787,7 +2026,7 @@ def process_evaluation_with_example_images(example_images, description: str, tit
             <div class="gpt-o3-analysis-container">
                 <div class="analysis-status">
                     <span class="analysis-icon">🔧</span>
-                    <span>正在初始化 AI 智能评估器<span class="thinking-dots"></span></span>
+                    <span>正在初始化专业评估系统<span class="thinking-dots"></span></span>
                 </div>
             </div>
             ''', unsafe_allow_html=True)
@@ -1828,7 +2067,7 @@ def process_evaluation_with_example_images(example_images, description: str, tit
             <div class="gpt-o3-analysis-container">
                 <div style="text-align: center;">
                     <span class="rotating-brain">🧠</span>
-                    <h2 style="color: #2d3748; margin: 1rem 0;">AI鉴定模型深度分析启动</h2>
+                    <h2 style="color: #2d3748; margin: 1rem 0;">专业鉴定系统深度分析启动</h2>
                 </div>
                 <div class="deep-analysis-info">
                     <h3 style="margin: 0 0 1rem 0;">🔬 多维度智能鉴定</h3>
@@ -1849,12 +2088,12 @@ def process_evaluation_with_example_images(example_images, description: str, tit
             <div class="gpt-o3-analysis-container">
                 <div style="text-align: center;">
                     <span class="rotating-brain">🧠</span>
-                    <h2 style="color: #2d3748; margin: 1rem 0;">AI鉴定模型正在深度思考中...</h2>
+                    <h2 style="color: #2d3748; margin: 1rem 0;">专业鉴定系统正在深度思考中...</h2>
                 </div>
                 <div class="deep-analysis-info">
-                    <h3 style="margin: 0 0 1rem 0;">🔬 AI 智能分析进行中</h3>
+                    <h3 style="margin: 0 0 1rem 0;">🔬 智能分析进行中</h3>
                     <p style="margin: 0; font-size: 1.1rem;">
-                        AI鉴定模型正在运用强大的推理能力分析您的古董<br>
+                        专业鉴定系统正在运用先进算法分析您的古董<br>
                         <strong>请耐心等待，分析过程可能需要1-3分钟</strong>
                     </p>
                 </div>
@@ -1896,9 +2135,9 @@ def process_evaluation_with_example_images(example_images, description: str, tit
         with progress_container.container():
             st.markdown('''
             <div class="completion-celebration">
-                <h2 style="color: #22543d; margin: 0 0 1rem 0;">🎉 AI鉴定模型分析完成！</h2>
+                <h2 style="color: #22543d; margin: 0 0 1rem 0;">🎉 专业鉴定分析完成！</h2>
                 <p style="color: #2f855a; margin: 0; font-size: 1.1rem;">
-                    高级AI推理引擎已完成全面分析，正在生成专业鉴定报告...
+                    专业鉴定系统已完成全面分析，正在生成详细报告...
                 </p>
             </div>
             ''', unsafe_allow_html=True)
@@ -1953,7 +2192,7 @@ def process_evaluation_with_example_images(example_images, description: str, tit
             
             # Then display the detailed evaluation text
             st.markdown("---")
-            st.markdown("## 🎯 AI鉴定模型专业鉴定报告")
+            st.markdown("## 📋 专业古董鉴定详细报告")
             
             # Use the formatted evaluation from the result
             st.markdown(result["evaluation"], unsafe_allow_html=True)
