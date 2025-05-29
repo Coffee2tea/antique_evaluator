@@ -1,11 +1,16 @@
 import os
+import streamlit as st
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
 # OpenAI Configuration
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Load from environment or .env file
+# Try to get API key from Streamlit secrets first, then fallback to environment variables
+try:
+    OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+except (KeyError, FileNotFoundError):
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # App Configuration
 APP_TITLE = "🏺 AI古董鉴定专家"
