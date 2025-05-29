@@ -198,6 +198,16 @@ temp_images/
 *.tiff
 *.webp
 
+# But include example images for demo functionality
+!example1/*.jpg
+!example1/*.jpeg
+!example1/*.png
+!example1/*.webp
+!example2/*.jpg
+!example2/*.jpeg
+!example2/*.png
+!example2/*.webp
+
 # Model files (if large)
 *.pkl
 *.model
