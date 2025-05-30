@@ -563,7 +563,7 @@ class AntiqueEvaluator:
         return text 
 
     def format_evaluation_report(self, report_text: str) -> str:
-        """Format the evaluation report with structured simple styling"""
+        """Format the evaluation report with simple, clean styling without cards"""
         if not report_text:
             return ""
         
@@ -583,88 +583,76 @@ class AntiqueEvaluator:
             if not line:
                 continue
             
-            # Main sections (一、二、三、四、)
+            # Main sections (一、二、三、四、) - Make them bigger and bolder
             if any(keyword in line for keyword in ['一、', '二、', '三、', '四、', '第一', '第二', '第三', '第四']):
                 content_parts.append(f'''
-<div style="margin: 1.5rem 0; padding: 1.5rem; border: 2px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb;">
-<h2 style="margin: 0 0 1rem 0; padding: 0; font-weight: bold; font-size: 1.3rem; color: #1f2937; border-bottom: 1px solid #d1d5db; padding-bottom: 0.5rem;">{line}</h2>
+<h2 style="margin: 2.5rem 0 1.5rem 0; font-size: 1.8rem; font-weight: 800; color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 0.8rem;">{line}</h2>
 ''')
                 
             elif line.startswith('**') and line.endswith('**'):
-                # Subsection headers
+                # Subsection headers - Make them bigger and bolder
                 subsection = line[2:-2]
-                content_parts.append(f'<h3 style="margin: 1rem 0 0.5rem 0; font-weight: bold; font-size: 1.1rem; color: #374151;">{subsection}</h3>')
+                content_parts.append(f'<h3 style="margin: 2rem 0 1rem 0; font-size: 1.5rem; font-weight: 700; color: #34495e;">{subsection}</h3>')
                 
             elif ':' in line and len(line.split(':')[0]) < 35:
-                # Key-value pairs
+                # Key-value pairs with simple formatting
                 parts = line.split(':', 1)
                 if len(parts) == 2:
                     key = parts[0].strip()
                     value = parts[1].strip()
                     content_parts.append(f'''
-<div style="margin: 0.5rem 0; padding: 0.75rem; border-left: 3px solid #3b82f6; background-color: #f8fafc;">
-<div style="font-weight: bold; color: #1e40af; margin-bottom: 0.25rem;">{key}</div>
-<div style="color: #374151;">{value}</div>
+<div style="margin: 0.5rem 0; line-height: 1.6;">
+<strong style="color: #2c3e50; font-size: 1.1rem;">{key}:</strong> <span style="color: #34495e; font-size: 1.05rem;">{value}</span>
 </div>''')
                 else:
-                    content_parts.append(f'<p style="margin: 0.5rem 0; padding: 0.5rem; color: #374151;">{line}</p>')
+                    content_parts.append(f'<p style="margin: 0.8rem 0; line-height: 1.6; color: #2c3e50;">{line}</p>')
                 
             elif line.startswith('结论') or '真品可能性' in line or '综合判断' in line:
-                # Conclusions
+                # Conclusions with simple emphasis - Make title bigger and bolder
                 content_parts.append(f'''
-<div style="margin: 1rem 0; padding: 1rem; border: 2px solid #f59e0b; border-radius: 6px; background-color: #fefbf3;">
-<div style="font-weight: bold; color: #92400e; margin-bottom: 0.5rem;">🏆 鉴定结论</div>
-<p style="margin: 0; color: #92400e; font-weight: bold;">{line}</p>
+<div style="margin: 2rem 0; padding: 1.2rem 0; border-top: 2px solid #bdc3c7; border-bottom: 2px solid #bdc3c7;">
+<h4 style="margin: 0 0 0.8rem 0; font-size: 1.4rem; font-weight: 700; color: #e67e22;">🏆 鉴定结论</h4>
+<p style="margin: 0; color: #2c3e50; font-weight: 600; line-height: 1.6; font-size: 1.1rem;">{line}</p>
 </div>''')
                 
             elif line.startswith('建议') or '注意事项' in line:
-                # Recommendations
+                # Recommendations with simple emphasis - Make title bigger and bolder
                 content_parts.append(f'''
-<div style="margin: 1rem 0; padding: 1rem; border: 2px solid #10b981; border-radius: 6px; background-color: #f0fdf4;">
-<div style="font-weight: bold; color: #065f46; margin-bottom: 0.5rem;">💡 专业建议</div>
-<p style="margin: 0; color: #065f46; font-weight: bold;">{line}</p>
+<div style="margin: 2rem 0; padding: 1.2rem 0; border-top: 2px solid #bdc3c7; border-bottom: 2px solid #bdc3c7;">
+<h4 style="margin: 0 0 0.8rem 0; font-size: 1.4rem; font-weight: 700; color: #27ae60;">💡 专业建议</h4>
+<p style="margin: 0; color: #2c3e50; font-weight: 600; line-height: 1.6; font-size: 1.1rem;">{line}</p>
 </div>''')
                 
             else:
                 # Regular paragraphs
-                content_parts.append(f'<p style="margin: 0.5rem 0; padding: 0.25rem; line-height: 1.6; color: #374151;">{line}</p>')
-        
-        # Close any open section divs
-        if content_parts and '<div style="margin: 1.5rem 0; padding: 1.5rem; border: 2px solid #e5e7eb' in str(content_parts):
-            content_parts.append('</div>')
+                content_parts.append(f'<p style="margin: 0.8rem 0; line-height: 1.7; color: #2c3e50;">{line}</p>')
         
         content = '\n'.join(content_parts)
         
-        # Create the structured simple report
+        # Create the simple, clean report with bigger, bolder main title
         return f'''
-<div style="max-width: 100%; margin: 0 auto; font-family: system-ui, -apple-system, sans-serif;">
+<div style="max-width: 800px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #ffffff; line-height: 1.6;">
 
-<!-- Header Section -->
-<div style="text-align: center; margin-bottom: 2rem; padding: 2rem; border: 2px solid #3b82f6; border-radius: 10px; background-color: #eff6ff;">
-<h1 style="margin: 0 0 0.5rem 0; font-size: 1.8rem; font-weight: bold; color: #1e40af;">🏺 古董文物鉴定报告</h1>
-<p style="margin: 0; color: #3730a3; font-weight: 600;">AI智能分析评估</p>
-<div style="margin-top: 1rem; padding: 0.5rem 1rem; background-color: #dbeafe; border-radius: 20px; display: inline-block;">
-<span style="color: #1e40af; font-size: 0.9rem; font-weight: 600;">📅 {timestamp}</span>
-</div>
+<!-- Simple Header with bigger, bolder title -->
+<div style="text-align: center; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 3px solid #3498db;">
+<h1 style="margin: 0 0 0.5rem 0; font-size: 2.5rem; font-weight: 800; color: #2c3e50;">🏺 古董文物鉴定报告</h1>
+<p style="margin: 0.5rem 0 0 0; color: #7f8c8d; font-size: 1.2rem; font-weight: 600;">AI 智能分析评估</p>
+<p style="margin: 1rem 0 0 0; color: #95a5a6; font-size: 1rem; font-weight: 500;">📅 {timestamp}</p>
 </div>
 
 <!-- Content Section -->
-<div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 2rem;">
+<div style="margin: 0; padding: 0;">
 {content}
 </div>
 
-<!-- Footer Section -->
-<div style="margin-top: 2rem; padding: 1.5rem; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; text-align: center;">
-<div style="padding: 1rem; border: 1px solid #d1d5db; border-radius: 6px; background-color: #ffffff;">
-<p style="margin: 0; color: #374151; font-size: 0.9rem;">
-<strong style="color: #dc2626;">⚠️ 重要声明：</strong> 
+<!-- Simple Footer -->
+<div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #ecf0f1; text-align: center;">
+<p style="margin: 0; color: #7f8c8d; font-size: 0.9rem; line-height: 1.5;">
+<strong style="color: #e74c3c; font-weight: 700;">⚠️ 重要声明:</strong> 
 本报告基于AI深度学习分析生成，仅供专业参考。最终鉴定结果需结合实物检测，建议咨询权威古董鉴定机构进行确认。
 </p>
-</div>
-<div style="margin-top: 1rem; color: #6b7280; font-size: 0.8rem;">
-<span style="margin: 0 1rem;">🤖 GPT-o3</span>
-<span style="margin: 0 1rem;">🔒 安全</span>
-<span style="margin: 0 1rem;">🏺 专业</span>
+<div style="margin-top: 1.5rem; color: #bdc3c7; font-size: 0.8rem; font-weight: 500;">
+🤖 GPT-o3 | 🔒 安全 | 🏺 专业
 </div>
 </div>
 
