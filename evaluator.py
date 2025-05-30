@@ -381,7 +381,7 @@ class AntiqueEvaluator:
         return text 
 
     def format_evaluation_report(self, report_text: str, language: str = "en") -> str:
-        """Format the evaluation report with simple, clean styling without cards"""
+        """Format the evaluation report with clean, simple styling using markdown"""
         if not report_text:
             return ""
         
@@ -398,11 +398,17 @@ class AntiqueEvaluator:
         
         # Language-specific titles
         if language == "en":
-            main_title = "🏺 Antique Authentication Report"
-            subtitle = "AI Intelligent Analysis & Assessment"
+            main_title = "🏺 **Antique Authentication Report**"
+            subtitle = "*AI Intelligent Analysis & Assessment*"
         else:
-            main_title = "🏺 古董文物鉴定报告"
-            subtitle = "AI 智能分析评估"
+            main_title = "🏺 **古董文物鉴定报告**"
+            subtitle = "*AI 智能分析评估*"
+        
+        # Add header with smaller styling
+        content_parts.append(f"### {main_title}")
+        content_parts.append(f"{subtitle}")
+        content_parts.append(f"📅 *{timestamp}*")
+        content_parts.append("---")
         
         for line in lines:
             line = line.strip()
@@ -411,66 +417,56 @@ class AntiqueEvaluator:
             
             # Handle different section header formats based on language
             if language == "en":
-                # English main section headers (1. 2. 3. 4. followed by title words)
-                if re.match(r'^[1-4]\.\s+[A-Z][a-zA-Z\s]+$', line):
-                    content_parts.append(f'<h2 style="color: #2d3748; font-size: 1.8rem; font-weight: 700; margin: 2rem 0 1rem 0; border-bottom: 3px solid #4299e1; padding-bottom: 0.5rem;">{line}</h2>')
-                # English sub-sections with ** formatting or starting with uppercase
+                # English numbered main section headers (1. 2. 3. 4. followed by title)
+                if re.match(r'^\d+\.\s+[A-Za-z\s&]+', line):
+                    content_parts.append(f"**{line}**")
+                # English lettered sub-sections (A. B. C.)
+                elif re.match(r'^[A-Z]\.\s+[A-Za-z\s\-]+', line):
+                    content_parts.append(f"**{line}**")
+                # English sub-sections with ** formatting
                 elif line.startswith('**') and line.endswith('**'):
                     clean_line = line.strip('*')
-                    content_parts.append(f'<h3 style="color: #2b6cb0; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 0.8rem 0;">{clean_line}</h3>')
-                # English subsection headers (a. b. c. or other patterns)
-                elif re.match(r'^[a-z]\.\s+[A-Z]', line) or re.match(r'^[A-Z][a-zA-Z\s]+:', line):
-                    content_parts.append(f'<h4 style="color: #4a5568; font-size: 1.2rem; font-weight: 600; margin: 1.2rem 0 0.6rem 0;">{line}</h4>')
-                # Bullet points (• or –)
-                elif line.startswith('•') or line.startswith('–') or line.startswith('- '):
-                    content_parts.append(f'<p style="margin: 0.6rem 0 0.6rem 1.5rem; font-size: 1.05rem; line-height: 1.6; color: #4a5568;">{line}</p>')
+                    content_parts.append(f"**{clean_line}**")
+                # Standalone titles (like "Expert Authentication Report")
+                elif len(line.split()) <= 5 and any(word.istitle() for word in line.split()) and not line.startswith('•') and not line.startswith('-'):
+                    content_parts.append(f"**{line}**")
+                # Bullet points and regular content
+                elif line.startswith('•') or line.startswith('-') or line.startswith('–'):
+                    content_parts.append(f"{line}")
                 # Regular paragraphs
                 else:
-                    content_parts.append(f'<p style="margin: 0.8rem 0; font-size: 1.05rem; line-height: 1.7; color: #2d3748;">{line}</p>')
+                    content_parts.append(f"{line}")
             else:
-                # Chinese section headers (一、二、三、四、) - Make them bigger and more prominent
-                if re.match(r'^[一二三四五六七八九十]、', line) or re.match(r'^\d+\.', line):
-                    content_parts.append(f'<h2 style="color: #2d3748; font-size: 1.8rem; font-weight: 700; margin: 2rem 0 1rem 0; border-bottom: 3px solid #4299e1; padding-bottom: 0.5rem;">{line}</h2>')
-                # Sub-sections with ** formatting - Make them bigger and bolder
+                # Chinese formatting logic (existing)
+                # 一级标题 (带序号的主要部分)
+                if re.match(r'^[一二三四五六七八九十]\s*[、．]\s*.+|^\d+[、．]\s*.+', line):
+                    content_parts.append(f"**{line}**")
+                # 二级标题
                 elif line.startswith('**') and line.endswith('**'):
                     clean_line = line.strip('*')
-                    content_parts.append(f'<h3 style="color: #2b6cb0; font-size: 1.4rem; font-weight: 600; margin: 1.5rem 0 0.8rem 0;">{clean_line}</h3>')
-                # Bullet points with enhanced styling
-                elif line.startswith('- '):
-                    content_parts.append(f'<p style="margin: 0.6rem 0 0.6rem 1.5rem; font-size: 1.05rem; line-height: 1.6; color: #4a5568;">• {line[2:]}</p>')
-                # Regular paragraphs with better spacing
+                    content_parts.append(f"**{clean_line}**")
+                # 独立的重要标题行
+                elif (len(line) < 20 and 
+                      ('鉴定' in line or '评估' in line or '分析' in line or '建议' in line or 
+                       '价值' in line or '总结' in line or '结论' in line or '背景' in line) and
+                      not line.startswith('•') and not line.startswith('-')):
+                    content_parts.append(f"**{line}**")
+                # 列表项和普通段落
                 else:
-                    content_parts.append(f'<p style="margin: 0.8rem 0; font-size: 1.05rem; line-height: 1.7; color: #2d3748;">{line}</p>')
-        
-        # Combine all content
-        formatted_content = '\n'.join(content_parts)
+                    content_parts.append(f"{line}")
         
         # Language-specific disclaimer
         if language == "en":
-            disclaimer = "⚠️ Important Notice: This report is generated by AI deep learning analysis for professional reference only. Final authentication results should be combined with physical examination. We recommend consulting authoritative antique authentication institutions for confirmation."
+            disclaimer = "⚠️ **Important Notice**: This report is generated by AI deep learning analysis for professional reference only. Final authentication results should be combined with physical examination. We recommend consulting authoritative antique authentication institutions for confirmation."
         else:
-            disclaimer = "⚠️ 重要声明: 本报告基于AI深度学习分析生成，仅供专业参考。最终鉴定结果需结合实物检测，建议咨询权威古董鉴定机构进行确认。"
+            disclaimer = "⚠️ **重要声明**: 本报告基于AI深度学习分析生成，仅供专业参考。最终鉴定结果需结合实物检测，建议咨询权威古董鉴定机构进行确认。"
         
-        # Return complete formatted report
-        return f'''
-        <div style="max-width: 900px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); overflow: hidden;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem; text-align: center;">
-                <h1 style="color: white; margin: 0; font-size: 2.2rem; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">{main_title}</h1>
-                <p style="color: rgba(255, 255, 255, 0.9); margin: 0.5rem 0 0 0; font-size: 1.1rem; font-weight: 500;">{subtitle}</p>
-                <p style="color: rgba(255, 255, 255, 0.8); margin: 0.5rem 0 0 0; font-size: 0.95rem;">📅 {timestamp}</p>
-            </div>
-            
-            <div style="padding: 2.5rem;">
-                {formatted_content}
-                
-                <div style="margin-top: 3rem; padding: 1.5rem; background: #f7fafc; border-left: 4px solid #4299e1; border-radius: 8px;">
-                    <p style="margin: 0; font-size: 0.95rem; line-height: 1.6; color: #4a5568; font-style: italic;">
-                        {disclaimer}
-                    </p>
-                </div>
-            </div>
-        </div>
-        '''
+        # Add disclaimer
+        content_parts.append("---")
+        content_parts.append(disclaimer)
+        
+        # Join all parts with proper spacing
+        return '\n\n'.join(content_parts)
 
     def _get_system_prompt(self, language: str = "en") -> str:
         """Get system prompt based on language preference"""

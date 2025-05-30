@@ -22,7 +22,7 @@ except Exception as e:
 print(f"🔑 Final API key status: {'✅ Available' if OPENAI_API_KEY else '❌ Not found'}")
 
 # App Configuration
-APP_TITLE = "🏺 AI古董鉴定专家"
+APP_TITLE = "🏺 AI Antique Expert"
 APP_DESCRIPTION = "基于最新AI技术的智能古董鉴定与真伪分析平台 - 运用先进推理技术提供专业评估"
 
 # GPT Model Configuration
