@@ -1,6 +1,6 @@
 import streamlit as st
 from evaluator import AntiqueEvaluator
-from config import APP_TITLE, APP_DESCRIPTION
+from config import APP_TITLE, APP_DESCRIPTION, LANGUAGES, TEXTS
 import logging
 import time
 import base64
@@ -21,13 +21,45 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-def create_authenticity_progress_bar(score: int) -> str:
+def get_text(key: str, lang: str = "en") -> str:
+    """Get translated text based on language"""
+    return TEXTS.get(lang, TEXTS["en"]).get(key, TEXTS["en"].get(key, key))
+
+def create_language_selector():
+    """Create language selection sidebar"""
+    with st.sidebar:
+        st.markdown("### 🌐 Language / 语言")
+        
+        # Initialize language in session state - now defaults to English
+        if "language" not in st.session_state:
+            st.session_state.language = "en"
+        
+        # Language selector
+        selected_lang_name = st.selectbox(
+            "Select Language:",
+            options=list(LANGUAGES.keys()),
+            index=1 if st.session_state.language == "en" else 0,
+            format_func=lambda x: f"{LANGUAGES[x]['flag']} {LANGUAGES[x]['name']}"
+        )
+        
+        # Update session state when language changes
+        new_lang = LANGUAGES[selected_lang_name]["code"]
+        if new_lang != st.session_state.language:
+            st.session_state.language = new_lang
+            st.rerun()
+        
+        return st.session_state.language
+
+def create_authenticity_progress_bar(score: int, language: str = "en") -> str:
     """Create a colored progress bar for authenticity score"""
     # Calculate color from red to green based on score
     red_component = max(0, 255 - int(score * 2.55))
     green_component = min(255, int(score * 2.55))
     
     color = f"rgb({red_component}, {green_component}, 0)"
+    
+    # Language-specific text
+    authenticity_text = "真品可能性" if language == "zh" else "Authenticity Likelihood"
     
     progress_html = f"""
     <div style="
@@ -51,7 +83,7 @@ def create_authenticity_progress_bar(score: int) -> str:
             font-size: 16px;
             transition: width 0.5s ease-in-out;
         ">
-            真品可能性: {score}%
+            {authenticity_text}: {score}%
         </div>
     </div>
     """
@@ -267,6 +299,9 @@ def main():
     if "reset_trigger" not in st.session_state:
         st.session_state.reset_trigger = False
     
+    # Add language selector and get current language
+    current_lang = create_language_selector()
+    
     # Reset function
     def reset_app():
         """Reset all form inputs and uploaded files"""
@@ -295,12 +330,12 @@ def main():
             del st.session_state.example_loaded
         st.rerun()
     
-    # Header with elegant, bright design
-    st.markdown("""
+    # Header with elegant, bright design - now using dynamic text
+    st.markdown(f"""
     <div style='text-align: center; padding: 3rem 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; border-radius: 20px; margin-bottom: 2.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.2); position: relative; overflow: hidden;'>
         <div style='position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.1) 0%, transparent 50%);'></div>
-        <h1 style='margin: 0; font-size: 2.8rem; font-weight: 600; font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.02em; position: relative; z-index: 1; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.3);'>🏺 AI古董鉴定专家</h1>
-        <p style='margin: 1rem 0 0 0; font-size: 1.1rem; font-weight: 400; color: rgba(255,255,255,0.9); opacity: 0.95; position: relative; z-index: 1;'>基于最新AI技术的智能古董鉴定与真伪分析平台</p>
+        <h1 style='margin: 0; font-size: 2.8rem; font-weight: 600; font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: -0.02em; position: relative; z-index: 1; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.3);'>{get_text("app_title", current_lang)}</h1>
+        <p style='margin: 1rem 0 0 0; font-size: 1.1rem; font-weight: 400; color: rgba(255,255,255,0.9); opacity: 0.95; position: relative; z-index: 1;'>{get_text("app_subtitle", current_lang)}</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1486,44 +1521,22 @@ def main():
     """, unsafe_allow_html=True)
     
     # Usage instructions with better formatting
-    st.markdown('<div class="section-header"><h3>📋 使用说明</h3></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-header"><h3>{get_text("usage_title", current_lang)}</h3></div>', unsafe_allow_html=True)
     
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        st.info("""
-        **📝 使用步骤：**
-        1. 上传古董图片（支持JPG、PNG、WEBP格式）
-        2. 输入古董描述信息（可选）
-        3. 点击评估按钮
-        4. 等待最新AI模型分析结果
-        
-        **💡 专业建议：**
-        - 上传多角度的清晰图片
-        - 包含底部、侧面、细节特写
-        - 图片大小不超过10MB
-        """)
+        st.info(get_text("usage_steps", current_lang))
     
     with col2:
-        st.success("""
-        **📁 支持格式：**
-        - JPEG (.jpg, .jpeg)
-        - PNG (.png)
-        - WEBP (.webp)
-        
-        **🎯 AI功能：**
-        - 真伪鉴定分析
-        - 年代估测
-        - 材质识别
-        - 价值评估
-        """)
+        st.success(get_text("supported_formats", current_lang))
     
     # Main content section
     # Example buttons section - place above upload section
-    st.markdown("""
+    st.markdown(f"""
     <div class="example-buttons-section" style="margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 16px; border: 1px solid rgba(0,0,0,0.1);">
-        <h4 style="margin: 0 0 1rem 0; color: #495057; font-weight: 600; text-align: center;">📚 试用演示例子</h4>
-        <p style="margin: 0 0 1.5rem 0; color: #6c757d; text-align: center; font-size: 0.9rem;">点击下方按钮快速加载古董示例进行体验</p>
+        <h4 style="margin: 0 0 1rem 0; color: #495057; font-weight: 600; text-align: center;">📚 {"试用演示例子" if current_lang == "zh" else "Try Demo Examples"}</h4>
+        <p style="margin: 0 0 1.5rem 0; color: #6c757d; text-align: center; font-size: 0.9rem;">{"点击下方按钮快速加载古董示例进行体验" if current_lang == "zh" else "Click the buttons below to quickly load antique examples for testing"}</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1531,46 +1544,44 @@ def main():
     col1, col2 = st.columns(2)
     
     with col1:
-        example1_button = st.button("🏺 试用例子1", use_container_width=True, help="加载第一个古董示例")
+        example1_button = st.button(get_text("example1_btn", current_lang), use_container_width=True, help="加载第一个古董示例" if current_lang == "zh" else "Load first antique example")
     
     with col2:
-        example2_button = st.button("🏛️ 试用例子2", use_container_width=True, help="加载第二个古董示例")
+        example2_button = st.button(get_text("example2_btn", current_lang), use_container_width=True, help="加载第二个古董示例" if current_lang == "zh" else "Load second antique example")
     
     # Handle example button clicks
     if example1_button:
         load_example_into_session(1)
-        st.success("✅ 已加载试用例子1！")
+        st.success("✅ 已加载试用例子1！" if current_lang == "zh" else "✅ Example 1 loaded successfully!")
         st.rerun()
     
     if example2_button:
         load_example_into_session(2)
-        st.success("✅ 已加载试用例子2！")
+        st.success("✅ 已加载试用例子2！" if current_lang == "zh" else "✅ Example 2 loaded successfully!")
         st.rerun()
     
     # Upload prompt section with icons and clear instructions
-    st.markdown("""
+    upload_tips_html = " ".join([f'<span class="tip-item">{tip}</span>' for tip in get_text("upload_tips", current_lang)])
+    st.markdown(f"""
     <div class="upload-prompt-section">
         <div class="upload-icon">📷</div>
-        <h3 class="upload-title">上传古董图片开始鉴定</h3>
+        <h3 class="upload-title">{get_text("upload_title", current_lang)}</h3>
         <p class="upload-description">
-            <strong>📸 请上传您的古董照片</strong><br>
-            支持多张图片同时上传，建议包含不同角度的照片
+            <strong>📸 {get_text("upload_subtitle", current_lang)}</strong><br>
+            {get_text("upload_description", current_lang)}
         </p>
         <div class="upload-tips">
-            <span class="tip-item">💡 正面照</span>
-            <span class="tip-item">💡 背面照</span>
-            <span class="tip-item">💡 细节特写</span>
-            <span class="tip-item">💡 底部标记</span>
+            {upload_tips_html}
         </div>
     </div>
     """, unsafe_allow_html=True)
     
     # Upload area with dynamic key for reset functionality
     uploaded_files = st.file_uploader(
-        "选择图片文件:",
+        get_text("name_label", current_lang).replace("🏷️ 古董名称/标题 (可选):", "选择图片文件:").replace("🏷️ Antique Name/Title (Optional):", "Choose image files:"),
         type=['jpg', 'jpeg', 'png', 'webp'],
         accept_multiple_files=True,
-        help="可以同时上传多张图片，支持JPG、PNG、WEBP格式",
+        help="可以同时上传多张图片，支持JPG、PNG、WEBP格式" if current_lang == "zh" else "Upload multiple images simultaneously, supports JPG, PNG, WEBP formats",
         key=f"uploaded_files_{st.session_state.reset_trigger}"
     )
     
@@ -1583,13 +1594,13 @@ def main():
     # Display uploaded images or example images with better styling
     if uploaded_files or example_images_to_display:
         if uploaded_files:
-            st.markdown('<div class="section-header"><h3>🖼️ 预览上传的图片</h3></div>', unsafe_allow_html=True)
-            st.success(f"✅ 已成功上传 {len(uploaded_files)} 张图片")
+            st.markdown(f'<div class="section-header"><h3>🖼️ {"预览上传的图片" if current_lang == "zh" else "Preview Uploaded Images"}</h3></div>', unsafe_allow_html=True)
+            st.success(f"✅ {'已成功上传' if current_lang == 'zh' else 'Successfully uploaded'} {len(uploaded_files)} {'张图片' if current_lang == 'zh' else 'images'}")
             images_to_display = uploaded_files
             is_uploaded = True
         else:
-            st.markdown(f'<div class="section-header"><h3>🖼️ 试用例子{st.session_state.example_loaded} - 预览图片</h3></div>', unsafe_allow_html=True)
-            st.info(f"📚 正在显示试用例子{st.session_state.example_loaded}的图片")
+            st.markdown(f'<div class="section-header"><h3>🖼️ {"试用例子" if current_lang == "zh" else "Demo Example"}{st.session_state.example_loaded} - {"预览图片" if current_lang == "zh" else "Preview Images"}</h3></div>', unsafe_allow_html=True)
+            st.info(f"📚 {'正在显示试用例子' if current_lang == 'zh' else 'Displaying demo example'}{st.session_state.example_loaded}{'的图片' if current_lang == 'zh' else ' images'}")
             images_to_display = example_images_to_display
             is_uploaded = False
         
@@ -1607,20 +1618,20 @@ def main():
                         try:
                             if is_uploaded:
                                 image = Image.open(images_to_display[idx])
-                                caption = f"图片 {idx + 1}: {images_to_display[idx].name}"
+                                caption = f"{'图片' if current_lang == 'zh' else 'Image'} {idx + 1}: {images_to_display[idx].name}"
                             else:
                                 image = Image.open(images_to_display[idx])
                                 filename = os.path.basename(images_to_display[idx])
-                                caption = f"示例图片 {idx + 1}: {filename}"
+                                caption = f"{'示例图片' if current_lang == 'zh' else 'Example Image'} {idx + 1}: {filename}"
                             
                             st.markdown('<div class="image-preview">', unsafe_allow_html=True)
                             st.image(image, caption=caption, use_container_width=True)
                             st.markdown('</div>', unsafe_allow_html=True)
                         except Exception as e:
                             if is_uploaded:
-                                st.error(f"❌ 无法显示图片 {idx + 1}: {images_to_display[idx].name}")
+                                st.error(f"❌ {'无法显示图片' if current_lang == 'zh' else 'Cannot display image'} {idx + 1}: {images_to_display[idx].name}")
                             else:
-                                st.error(f"❌ 无法显示示例图片 {idx + 1}")
+                                st.error(f"❌ {'无法显示示例图片' if current_lang == 'zh' else 'Cannot display example image'} {idx + 1}")
         
         # File size check for uploaded files only
         if is_uploaded:
@@ -1633,13 +1644,13 @@ def main():
                 f.seek(0)
             
             if total_size > 50 * 1024 * 1024:
-                st.warning("⚠️ 上传的图片总大小超过50MB，可能影响处理速度")
+                st.warning("⚠️ 上传的图片总大小超过50MB，可能影响处理速度" if current_lang == "zh" else "⚠️ Total uploaded image size exceeds 50MB, may affect processing speed")
             else:
                 file_size_mb = total_size / (1024 * 1024)
-                st.info(f"📊 总文件大小: {file_size_mb:.1f} MB")
+                st.info(f"📊 {'总文件大小' if current_lang == 'zh' else 'Total file size'}: {file_size_mb:.1f} MB")
     
     # Input fields section
-    st.markdown('<div class="section-header"><h3>📝 古董信息描述 <span style="font-size: 0.6em; font-weight: 400; color: #6c757d;">(更多详细背景信息能为鉴定带来更好的效果)</span></h3></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-header"><h3>{get_text("info_title", current_lang)} <span style="font-size: 0.6em; font-weight: 400; color: #6c757d;">{get_text("info_subtitle", current_lang)}</span></h3></div>', unsafe_allow_html=True)
     
     # Get example data if available
     example_title = ""
@@ -1659,53 +1670,64 @@ def main():
     
     with col1:
         manual_title = st.text_input(
-            "🏷️ 古董名称/标题 (可选):",
+            get_text("name_label", current_lang),
             value=example_title,
-            placeholder="例如：清代康熙青花瓷碗、汉代玉璧、明代铜镜等",
+            placeholder=get_text("name_placeholder", current_lang),
             key=f"manual_title_{st.session_state.reset_trigger}"
         )
         
         manual_description = st.text_area(
-            "📄 古董描述信息 (可选):",
+            get_text("description_label", current_lang),
             value=example_description,
-            placeholder="请输入古董的详细描述，如：\n- 年代/朝代\n- 材质（陶瓷、玉石、金属等）\n- 尺寸大小\n- 制作工艺",
+            placeholder=get_text("description_placeholder", current_lang),
             height=220,
             key=f"manual_description_{st.session_state.reset_trigger}"
         )
     
     with col2:
         estimated_period = st.text_input(
-            "📅 估计年代:",
+            get_text("period_label", current_lang),
             value=example_estimated_period,
-            placeholder="例如：清代、民国、宋代等",
+            placeholder=get_text("period_placeholder", current_lang),
             key=f"estimated_period_{st.session_state.reset_trigger}"
         )
         
         estimated_material = st.text_input(
-            "🔍 估计材质:",
+            get_text("material_label", current_lang),
             value=example_estimated_material,
-            placeholder="例如：青花瓷、和田玉、青铜等",
+            placeholder=get_text("material_placeholder", current_lang),
             key=f"estimated_material_{st.session_state.reset_trigger}"
         )
         
         acquisition_info = st.text_area(
-            "📍 获得方式:",
+            get_text("acquisition_label", current_lang),
             value=example_acquisition_info,
-            placeholder="例如：家传、拍卖购买、古玩市场等",
+            placeholder=get_text("acquisition_placeholder", current_lang),
             height=120,
             key=f"acquisition_info_{st.session_state.reset_trigger}"
         )
     
     # Add clarification about the role of text inputs
-    st.info("""
-    💡 **说明**: 以上文字信息将作为参考背景提供给专业鉴定系统。
-    
-    📸 **主要鉴定依据**: 图片中的视觉证据（工艺、材质、细节等）
-    
-    📝 **辅助参考信息**: 您提供的文字描述
-    
-    🔍 **分析方式**: 系统将首先基于图片进行独立分析，然后对比您的描述信息，指出一致性或差异。
-    """)
+    if current_lang == "zh":
+        st.info("""
+        💡 **说明**: 以上文字信息将作为参考背景提供给专业鉴定系统。
+        
+        📸 **主要鉴定依据**: 图片中的视觉证据（工艺、材质、细节等）
+        
+        📝 **辅助参考信息**: 您提供的文字描述
+        
+        🔍 **分析方式**: 系统将首先基于图片进行独立分析，然后对比您的描述信息，指出一致性或差异。
+        """)
+    else:
+        st.info("""
+        💡 **Note**: The above text information will be provided as reference background to the professional authentication system.
+        
+        📸 **Primary Authentication Basis**: Visual evidence from images (craftsmanship, materials, details, etc.)
+        
+        📝 **Auxiliary Reference Information**: Text descriptions you provide
+        
+        🔍 **Analysis Method**: The system will first conduct independent analysis based on images, then compare with your description information, pointing out consistency or differences.
+        """)
     
     # Button section with evaluation and reset buttons
     st.markdown("---")
@@ -1715,17 +1737,17 @@ def main():
     col1, col2, col3, col4, col5 = st.columns([1, 2, 0.5, 2, 1])
     
     with col2:
-        evaluate_button = st.button("🔍 开始古董鉴定", type="primary", use_container_width=True)
+        evaluate_button = st.button(get_text("evaluate_btn", current_lang), type="primary", use_container_width=True)
     
     with col4:
-        reset_button = st.button("🔄 重新开始", use_container_width=True, help="清除所有上传的图片和填写的信息，开始新的鉴定")
+        reset_button = st.button(get_text("reset_btn", current_lang), use_container_width=True, help="清除所有上传的图片和填写的信息，开始新的鉴定" if current_lang == "zh" else "Clear all uploaded images and filled information, start new authentication")
     
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Handle reset button click
     if reset_button:
         reset_app()
-        st.success("✅ 已重置所有内容，可以开始新的鉴定！")
+        st.success("✅ 已重置所有内容，可以开始新的鉴定！" if current_lang == "zh" else "✅ All content has been reset, you can start new authentication!")
         st.rerun()
     
     if evaluate_button:
@@ -1734,42 +1756,52 @@ def main():
         has_examples = hasattr(st.session_state, 'example_images') and st.session_state.example_images
         
         if not has_uploaded and not has_examples:
-            st.error("❌ 请至少上传一张古董图片或选择一个试用例子")
+            st.error("❌ 请至少上传一张古董图片或选择一个试用例子" if current_lang == "zh" else "❌ Please upload at least one antique image or select a demo example")
             return
         
         # Build description
         full_description = []
         if manual_description:
-            full_description.append(f"古董描述信息: {manual_description}")
+            desc_prefix = "古董描述信息" if current_lang == "zh" else "Antique Description"
+            full_description.append(f"{desc_prefix}: {manual_description}")
         if estimated_period:
-            full_description.append(f"估计年代: {estimated_period}")
+            period_prefix = "估计年代" if current_lang == "zh" else "Estimated Period"
+            full_description.append(f"{period_prefix}: {estimated_period}")
         if estimated_material:
-            full_description.append(f"估计材质: {estimated_material}")
+            material_prefix = "估计材质" if current_lang == "zh" else "Estimated Material"
+            full_description.append(f"{material_prefix}: {estimated_material}")
         if acquisition_info:
-            full_description.append(f"获得方式: {acquisition_info}")
+            acquisition_prefix = "获得方式" if current_lang == "zh" else "How Acquired"
+            full_description.append(f"{acquisition_prefix}: {acquisition_info}")
         
         combined_description = "\n".join(full_description) if full_description else ""
         
         # Proceed with evaluation based on input type
         if has_uploaded:
-            process_evaluation_with_uploaded_files(uploaded_files, combined_description, manual_title)
+            process_evaluation_with_uploaded_files(uploaded_files, combined_description, manual_title, current_lang)
         else:
-            process_evaluation_with_example_images(st.session_state.example_images, combined_description, manual_title)
+            process_evaluation_with_example_images(st.session_state.example_images, combined_description, manual_title, current_lang)
     
     # Enhanced footer with better contrast
-    st.markdown("""
+    footer_title = get_text("app_title", current_lang)
+    footer_subtitle = "基于最新AI模型的专业古董评估工具" if current_lang == "zh" else "Professional antique assessment tool based on latest AI models"
+    footer_warning = "⚠️ 本工具仅供参考，重要决策请咨询专业古董鉴定师" if current_lang == "zh" else "⚠️ This tool is for reference only, please consult professional antique appraisers for important decisions"
+    footer_tip = "💡 支持多角度图片上传，提供更准确的鉴定分析" if current_lang == "zh" else "💡 Supports multi-angle image uploads for more accurate authentication analysis"
+    footer_security = "🔒 您的图片数据安全加密处理，不会被存储或泄露" if current_lang == "zh" else "🔒 Your image data is securely encrypted and processed, not stored or leaked"
+    
+    st.markdown(f"""
     <div class="footer-section">
-        <h4 style='color: #212529; margin-bottom: 1.5rem; font-weight: 600; font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;'>🏺 AI古董鉴定专家</h4>
-        <p style='color: #343a40; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 500;'>基于最新AI模型的专业古董评估工具</p>
+        <h4 style='color: #212529; margin-bottom: 1.5rem; font-weight: 600; font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;'>{footer_title}</h4>
+        <p style='color: #343a40; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 500;'>{footer_subtitle}</p>
         <div style='margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(52, 58, 64, 0.3);'>
-            <p style='color: #495057; margin: 0.75rem 0; font-weight: 600; font-size: 0.95rem;'>⚠️ 本工具仅供参考，重要决策请咨询专业古董鉴定师</p>
-            <p style='color: #343a40; margin: 0.75rem 0; font-size: 0.95rem; font-weight: 500;'>💡 支持多角度图片上传，提供更准确的鉴定分析</p>
-            <p style='color: #495057; margin: 0.75rem 0; font-size: 0.9rem; font-weight: 500;'>🔒 您的图片数据安全加密处理，不会被存储或泄露</p>
+            <p style='color: #495057; margin: 0.75rem 0; font-weight: 600; font-size: 0.95rem;'>{footer_warning}</p>
+            <p style='color: #343a40; margin: 0.75rem 0; font-size: 0.95rem; font-weight: 500;'>{footer_tip}</p>
+            <p style='color: #495057; margin: 0.75rem 0; font-size: 0.9rem; font-weight: 500;'>{footer_security}</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-def process_evaluation_with_uploaded_files(uploaded_files, description: str, title: str):
+def process_evaluation_with_uploaded_files(uploaded_files, description: str, title: str, lang: str):
     """Process evaluation using uploaded image files with enhanced GPT-o3 analysis progress display"""
     try:
         # Create progress container
@@ -1866,33 +1898,42 @@ def process_evaluation_with_uploaded_files(uploaded_files, description: str, tit
         # Start evaluation
         descriptions = [description] if description else []
         
-        # Call AI evaluation (this is where the long process happens)
+        # Call AI evaluation (this is where the long process happens) - now with language support
         result = evaluator.evaluate_antique(
             uploaded_files=image_data_urls,
             descriptions=descriptions,
-            title=title
+            title=title,
+            language=lang
         )
+        
+        # Language-specific message for phase 4
+        phase4_title = "💰 第四阶段：市场价值评估" if lang == "zh" else "💰 Phase 4: Market Value Assessment"
+        phase4_desc = "评估历史价值、艺术价值、市场行情" if lang == "zh" else "Evaluating historical value, artistic value, market trends"
         
         # Step 5: Show analysis phases after API call
         with progress_container.container():
-            st.markdown('''
+            st.markdown(f'''
             <div class="gpt-o3-analysis-container">
                 <div class="analysis-phase">
-                    <div class="phase-title">💰 第四阶段：市场价值评估</div>
-                    <div>评估历史价值、艺术价值、市场行情<span class="thinking-dots"></span></div>
+                    <div class="phase-title">{phase4_title}</div>
+                    <div>{phase4_desc}<span class="thinking-dots"></span></div>
                 </div>
             </div>
             ''', unsafe_allow_html=True)
         
         time.sleep(1.5)
         
+        # Language-specific completion messages
+        completion_title = "🎉 专业鉴定分析完成！" if lang == "zh" else "🎉 Professional authentication analysis completed!"
+        completion_desc = "专业鉴定系统已完成全面分析，正在生成详细报告..." if lang == "zh" else "Professional authentication system has completed comprehensive analysis, generating detailed report..."
+        
         # Show completion
         with progress_container.container():
-            st.markdown('''
+            st.markdown(f'''
             <div class="completion-celebration">
-                <h2 style="color: #22543d; margin: 0 0 1rem 0;">🎉 专业鉴定分析完成！</h2>
+                <h2 style="color: #22543d; margin: 0 0 1rem 0;">{completion_title}</h2>
                 <p style="color: #2f855a; margin: 0; font-size: 1.1rem;">
-                    专业鉴定系统已完成全面分析，正在生成详细报告...
+                    {completion_desc}
                 </p>
             </div>
             ''', unsafe_allow_html=True)
@@ -1903,130 +1944,83 @@ def process_evaluation_with_uploaded_files(uploaded_files, description: str, tit
         progress_container.empty()
         
         if result["success"]:
-            # Display final results FIRST
+            # Display final results with language support
             st.markdown("---")
-            st.markdown("## 🎯 最终鉴定结果")
-            
-            # Get data from JSON response
-            evaluation_data = result.get("data", {})
-            authenticity_score = result["score"]
+            st.markdown(f"## {get_text('result_title', lang)}")
             
             # Display authenticity score with progress bar
-            progress_html = create_authenticity_progress_bar(authenticity_score)
+            authenticity_score = result["score"]
+            progress_html = create_authenticity_progress_bar(authenticity_score, lang)
             st.markdown(progress_html, unsafe_allow_html=True)
             
-            # Show additional structured information if available
-            if evaluation_data:
-                col1, col2, col3 = st.columns(3)
-                
-                with col1:
-                    if evaluation_data.get("category"):
-                        st.markdown(f"**🏺 类型:** {evaluation_data['category']}")
-                
-                with col2:
-                    if evaluation_data.get("period"):
-                        st.markdown(f"**📅 年代:** {evaluation_data['period']}")
-                
-                with col3:
-                    if evaluation_data.get("material"):
-                        st.markdown(f"**🧱 材质:** {evaluation_data['material']}")
-                
-                # Show brief analysis if available
-                if evaluation_data.get("brief_analysis"):
-                    st.markdown(f"**💡 核心判断:** {evaluation_data['brief_analysis']}")
-            
-            # Score interpretation
+            # Score interpretation with language support
             if authenticity_score >= 80:
-                st.success(f"🟢 **高可信度**: 这件古董很可能是真品 ({authenticity_score}%)")
+                st.success(get_text("high_confidence", lang) + f" ({authenticity_score}%)")
             elif authenticity_score >= 60:
-                st.warning(f"🟡 **中等可信度**: 需要进一步专业鉴定 ({authenticity_score}%)")
+                st.warning(get_text("medium_confidence", lang) + f" ({authenticity_score}%)")
             elif authenticity_score >= 40:
-                st.warning(f"🟠 **较低可信度**: 存在疑点，建议谨慎 ({authenticity_score}%)")
+                st.warning(get_text("low_confidence", lang) + f" ({authenticity_score}%)")
             else:
-                st.error(f"🔴 **低可信度**: 可能是仿制品或现代制品 ({authenticity_score}%)")
+                st.error(get_text("very_low_confidence", lang) + f" ({authenticity_score}%)")
             
             # Then display the detailed evaluation text
             st.markdown("---")
-            st.markdown("## 📋 专业古董鉴定详细报告")
+            st.markdown(f"## {get_text('report_title', lang)}")
             
             # Use the formatted evaluation from the result
             st.markdown(result["evaluation"], unsafe_allow_html=True)
             
-            # Display input summary
-            with st.expander("📊 输入信息汇总", expanded=False):
+            # Display input summary with language support
+            input_summary_title = "📊 输入信息汇总" if lang == "zh" else "📊 Input Information Summary"
+            with st.expander(input_summary_title, expanded=False):
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.markdown("**📁 处理的图片:**")
+                    image_count_label = "**📁 处理的图片:**" if lang == "zh" else "**📁 Processed Images:**"
+                    st.markdown(image_count_label)
                     for i, uploaded_file in enumerate(uploaded_files):
-                        if i < len(image_data_urls):
-                            st.markdown(f"✅ {uploaded_file.name}")
-                        else:
-                            st.markdown(f"❌ {uploaded_file.name} (处理失败)")
-                    
-                    st.markdown("**📸 分析方式:**")
-                    st.markdown("- 主要依据：图片视觉证据")
-                    st.markdown("- 辅助参考：用户描述信息")
+                        st.markdown(f"  {i+1}. {uploaded_file.name}")
                 
                 with col2:
-                    st.markdown("**📝 用户提供的参考信息:**")
-                    
-                    # Get original input fields from the function scope
-                    # We need to pass these as parameters to track them properly
                     if title:
-                        st.markdown(f"• **古董名称/标题:** {title}")
-                    
-                    # Parse the combined description to show individual fields
+                        title_label = "**🏷️ 古董标题:**" if lang == "zh" else "**🏷️ Antique Title:**"
+                        st.markdown(f"{title_label} {title}")
                     if description:
-                        desc_lines = description.split('\n')
-                        for line in desc_lines:
-                            if line.strip():
-                                st.markdown(f"• **{line}**")
-                    
-                    if not title and not description:
-                        st.markdown("*未提供文字描述信息*")
-                        st.markdown("*鉴定完全基于图片分析*")
-            
-            # Recommendations
-            st.markdown("### 💡 专业建议")
-            if authenticity_score >= 70:
-                st.info("""
-                **建议后续行动:**
-                - ✅ 可考虑进行实物检测确认
-                - 📚 查阅相关历史文献资料
-                - 🏛️ 咨询博物馆或权威鉴定机构
-                - 📸 拍摄更多细节照片建档
-                """)
-            else:
-                st.warning("""
-                **建议谨慎行动:**
-                - ⚠️ 强烈建议实物专业鉴定
-                - 🔍 重点检查工艺和材质细节
-                - 📖 研究同时期真品对比资料
-                - 💰 如用于交易需多方验证
-                """)
+                        desc_label = "**📝 描述信息:**" if lang == "zh" else "**📝 Description:**"
+                        display_desc = description[:100] + "..." if len(description) > 100 else description
+                        st.markdown(f"{desc_label} {display_desc}")
+                        
         else:
-            st.error(f"❌ 评估失败: {result.get('error', result.get('evaluation', '未知错误'))}")
-            st.info("💡 请检查API密钥是否正确，或稍后重试")
-                
+            error_title = "❌ 评估失败" if lang == "zh" else "❌ Evaluation Failed"
+            st.error(f"{error_title}: {result.get('error', 'Unknown error')}")
+            
     except Exception as e:
-        logger.error(f"Evaluation error: {e}")
-        st.error(f"❌ 评估过程中发生错误: {str(e)}")
-        st.info("💡 请检查API密钥是否正确，或稍后重试")
+        error_msg = f"处理过程中发生错误: {str(e)}" if lang == "zh" else f"Error occurred during processing: {str(e)}"
+        st.error(error_msg)
+        logger.error(f"Error in process_evaluation_with_uploaded_files: {str(e)}")
+        api_check_msg = "💡 请检查API密钥是否正确，或稍后重试" if lang == "zh" else "💡 Please check if API key is correct, or try again later"
+        st.info(api_check_msg)
 
-def process_evaluation_with_example_images(example_images, description: str, title: str):
-    """Process evaluation using example images with enhanced GPT-o3 analysis progress display"""
+def process_evaluation_with_example_images(example_images, description: str, title: str, lang: str):
+    """Process evaluation using example images with enhanced analysis progress display"""
     try:
         # Create progress container
         progress_container = st.empty()
         
+        # Language-specific messages
+        init_msg = "正在初始化专业评估系统" if lang == "zh" else "Initializing professional authentication system"
+        process_msg = "正在处理示例图片数据" if lang == "zh" else "Processing example image data"
+        analysis_msg = "专业鉴定系统深度分析启动" if lang == "zh" else "Professional authentication system deep analysis initiated"
+        multi_analysis = "🔬 多维度智能鉴定" if lang == "zh" else "🔬 Multi-dimensional Intelligent Authentication"
+        thinking_msg = "专业鉴定系统正在深度思考中..." if lang == "zh" else "Professional authentication system thinking deeply..."
+        
         # Step 1: Initialize evaluator with animation
         with progress_container.container():
-            st.markdown('''
+            st.markdown(f'''
             <div class="gpt-o3-analysis-container">
                 <div class="analysis-status">
                     <span class="analysis-icon">🔧</span>
-                    <span>正在初始化专业评估系统<span class="thinking-dots"></span></span>
+                    <span>{init_msg}<span class="thinking-dots"></span></span>
                 </div>
             </div>
             ''', unsafe_allow_html=True)
@@ -2036,11 +2030,11 @@ def process_evaluation_with_example_images(example_images, description: str, tit
         
         # Step 2: Process example images
         with progress_container.container():
-            st.markdown('''
+            st.markdown(f'''
             <div class="gpt-o3-analysis-container">
                 <div class="analysis-status">
                     <span class="analysis-icon">📸</span>
-                    <span>正在处理和分析示例图片<span class="thinking-dots"></span></span>
+                    <span>{"正在处理和分析示例图片" if lang == "zh" else "Processing and analyzing example images"}<span class="thinking-dots"></span></span>
                 </div>
             </div>
             ''', unsafe_allow_html=True)
@@ -2053,27 +2047,34 @@ def process_evaluation_with_example_images(example_images, description: str, tit
                 image_data_urls.append(data_url)
                 logger.info(f"Successfully processed example image {i+1}: {image_file}")
             else:
-                st.warning(f"⚠️ 无法处理示例图片: {image_file}")
+                warning_msg = f"⚠️ 无法处理示例图片: {image_file}" if lang == "zh" else f"⚠️ Cannot process example image: {image_file}"
+                st.warning(warning_msg)
         
         if not image_data_urls:
-            st.error("❌ 无法处理任何示例图片，请检查图片格式")
+            error_msg = "❌ 无法处理任何示例图片，请检查图片格式" if lang == "zh" else "❌ Cannot process any example images, please check image formats"
+            st.error(error_msg)
             return
         
         time.sleep(1.5)
         
         # Step 3: AI Analysis with enhanced animation
+        analysis_title = "专业鉴定系统深度分析启动" if lang == "zh" else "Professional authentication system deep analysis initiated"
+        analysis_info = "🔬 多维度智能鉴定" if lang == "zh" else "🔬 Multi-dimensional Intelligent Authentication"
+        analysis_desc = "正在进行历史文献核对、工艺特征分析、材质科学检测、年代考证验证" if lang == "zh" else "Conducting historical document verification, craftsmanship analysis, material detection, period authentication"
+        analysis_time = "预计耗时1-3分钟，请耐心等待高质量分析结果" if lang == "zh" else "Estimated time 1-3 minutes, please wait patiently for high-quality analysis results"
+        
         with progress_container.container():
-            st.markdown('''
+            st.markdown(f'''
             <div class="gpt-o3-analysis-container">
                 <div style="text-align: center;">
                     <span class="rotating-brain">🧠</span>
-                    <h2 style="color: #2d3748; margin: 1rem 0;">专业鉴定系统深度分析启动</h2>
+                    <h2 style="color: #2d3748; margin: 1rem 0;">{analysis_title}</h2>
                 </div>
                 <div class="deep-analysis-info">
-                    <h3 style="margin: 0 0 1rem 0;">🔬 多维度智能鉴定</h3>
+                    <h3 style="margin: 0 0 1rem 0;">{analysis_info}</h3>
                     <p style="margin: 0; font-size: 1.1rem;">
-                        正在进行历史文献核对、工艺特征分析、材质科学检测、年代考证验证<br>
-                        <strong>预计耗时1-3分钟，请耐心等待高质量分析结果</strong>
+                        {analysis_desc}<br>
+                        <strong>{analysis_time}</strong>
                     </p>
                 </div>
                 <div class="progress-wave"></div>
@@ -2083,25 +2084,31 @@ def process_evaluation_with_example_images(example_images, description: str, tit
         time.sleep(2)
         
         # Step 4: Show AI thinking animation during API call
+        thinking_title = "专业鉴定系统正在深度思考中..." if lang == "zh" else "Professional authentication system thinking deeply..."
+        thinking_info = "🔬 智能分析进行中" if lang == "zh" else "🔬 Intelligent Analysis in Progress"
+        thinking_desc = "专业鉴定系统正在运用先进算法分析您的古董" if lang == "zh" else "Professional authentication system is analyzing your antique using advanced algorithms"
+        thinking_wait = "请耐心等待，分析过程可能需要1-3分钟" if lang == "zh" else "Please be patient, analysis process may take 1-3 minutes"
+        thinking_process = "深度推理中" if lang == "zh" else "Deep reasoning in progress"
+        
         with progress_container.container():
-            st.markdown('''
+            st.markdown(f'''
             <div class="gpt-o3-analysis-container">
                 <div style="text-align: center;">
                     <span class="rotating-brain">🧠</span>
-                    <h2 style="color: #2d3748; margin: 1rem 0;">专业鉴定系统正在深度思考中...</h2>
+                    <h2 style="color: #2d3748; margin: 1rem 0;">{thinking_title}</h2>
                 </div>
                 <div class="deep-analysis-info">
-                    <h3 style="margin: 0 0 1rem 0;">🔬 智能分析进行中</h3>
+                    <h3 style="margin: 0 0 1rem 0;">{thinking_info}</h3>
                     <p style="margin: 0; font-size: 1.1rem;">
-                        专业鉴定系统正在运用先进算法分析您的古董<br>
-                        <strong>请耐心等待，分析过程可能需要1-3分钟</strong>
+                        {thinking_desc}<br>
+                        <strong>{thinking_wait}</strong>
                     </p>
                 </div>
                 <div class="progress-wave"></div>
                 <div style="text-align: center; margin-top: 1.5rem;">
                     <div style="display: inline-flex; align-items: center; gap: 0.5rem; color: #667eea; font-weight: 600;">
                         <span style="animation: pulse 1.5s ease-in-out infinite;">💭</span>
-                        <span>深度推理中</span>
+                        <span>{thinking_process}</span>
                         <span class="thinking-dots"></span>
                     </div>
                 </div>
@@ -2115,29 +2122,38 @@ def process_evaluation_with_example_images(example_images, description: str, tit
         result = evaluator.evaluate_antique(
             uploaded_files=image_data_urls,
             descriptions=descriptions,
-            title=title
+            title=title,
+            language=lang
         )
+        
+        # Language-specific message for phase 4
+        phase4_title = "💰 第四阶段：市场价值评估" if lang == "zh" else "💰 Phase 4: Market Value Assessment"
+        phase4_desc = "评估历史价值、艺术价值、市场行情" if lang == "zh" else "Evaluating historical value, artistic value, market trends"
         
         # Step 5: Show analysis phases after API call
         with progress_container.container():
-            st.markdown('''
+            st.markdown(f'''
             <div class="gpt-o3-analysis-container">
                 <div class="analysis-phase">
-                    <div class="phase-title">💰 第四阶段：市场价值评估</div>
-                    <div>评估历史价值、艺术价值、市场行情<span class="thinking-dots"></span></div>
+                    <div class="phase-title">{phase4_title}</div>
+                    <div>{phase4_desc}<span class="thinking-dots"></span></div>
                 </div>
             </div>
             ''', unsafe_allow_html=True)
         
         time.sleep(1.5)
         
+        # Language-specific completion messages
+        completion_title = "🎉 专业鉴定分析完成！" if lang == "zh" else "🎉 Professional authentication analysis completed!"
+        completion_desc = "专业鉴定系统已完成全面分析，正在生成详细报告..." if lang == "zh" else "Professional authentication system has completed comprehensive analysis, generating detailed report..."
+        
         # Show completion
         with progress_container.container():
-            st.markdown('''
+            st.markdown(f'''
             <div class="completion-celebration">
-                <h2 style="color: #22543d; margin: 0 0 1rem 0;">🎉 专业鉴定分析完成！</h2>
+                <h2 style="color: #22543d; margin: 0 0 1rem 0;">{completion_title}</h2>
                 <p style="color: #2f855a; margin: 0; font-size: 1.1rem;">
-                    专业鉴定系统已完成全面分析，正在生成详细报告...
+                    {completion_desc}
                 </p>
             </div>
             ''', unsafe_allow_html=True)
@@ -2148,113 +2164,65 @@ def process_evaluation_with_example_images(example_images, description: str, tit
         progress_container.empty()
         
         if result["success"]:
-            # Display final results FIRST
+            # Display final results with language support
             st.markdown("---")
-            st.markdown("## 🎯 最终鉴定结果")
-            
-            # Get data from JSON response
-            evaluation_data = result.get("data", {})
-            authenticity_score = result["score"]
+            st.markdown(f"## {get_text('result_title', lang)}")
             
             # Display authenticity score with progress bar
-            progress_html = create_authenticity_progress_bar(authenticity_score)
+            authenticity_score = result["score"]
+            progress_html = create_authenticity_progress_bar(authenticity_score, lang)
             st.markdown(progress_html, unsafe_allow_html=True)
             
-            # Show additional structured information if available
-            if evaluation_data:
-                col1, col2, col3 = st.columns(3)
-                
-                with col1:
-                    if evaluation_data.get("category"):
-                        st.markdown(f"**🏺 类型:** {evaluation_data['category']}")
-                
-                with col2:
-                    if evaluation_data.get("period"):
-                        st.markdown(f"**📅 年代:** {evaluation_data['period']}")
-                
-                with col3:
-                    if evaluation_data.get("material"):
-                        st.markdown(f"**🧱 材质:** {evaluation_data['material']}")
-                
-                # Show brief analysis if available
-                if evaluation_data.get("brief_analysis"):
-                    st.markdown(f"**💡 核心判断:** {evaluation_data['brief_analysis']}")
-            
-            # Score interpretation
+            # Score interpretation with language support
             if authenticity_score >= 80:
-                st.success(f"🟢 **高可信度**: 这件古董很可能是真品 ({authenticity_score}%)")
+                st.success(get_text("high_confidence", lang) + f" ({authenticity_score}%)")
             elif authenticity_score >= 60:
-                st.warning(f"🟡 **中等可信度**: 需要进一步专业鉴定 ({authenticity_score}%)")
+                st.warning(get_text("medium_confidence", lang) + f" ({authenticity_score}%)")
             elif authenticity_score >= 40:
-                st.warning(f"🟠 **较低可信度**: 存在疑点，建议谨慎 ({authenticity_score}%)")
+                st.warning(get_text("low_confidence", lang) + f" ({authenticity_score}%)")
             else:
-                st.error(f"🔴 **低可信度**: 可能是仿制品或现代制品 ({authenticity_score}%)")
+                st.error(get_text("very_low_confidence", lang) + f" ({authenticity_score}%)")
             
             # Then display the detailed evaluation text
             st.markdown("---")
-            st.markdown("## 📋 专业古董鉴定详细报告")
+            st.markdown(f"## {get_text('report_title', lang)}")
             
             # Use the formatted evaluation from the result
             st.markdown(result["evaluation"], unsafe_allow_html=True)
             
-            # Display input summary
-            with st.expander("📊 输入信息汇总", expanded=False):
+            # Display input summary with language support
+            input_summary_title = "📊 输入信息汇总" if lang == "zh" else "📊 Input Information Summary"
+            with st.expander(input_summary_title, expanded=False):
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.markdown("**📁 处理的图片:**")
+                    image_count_label = "**📁 处理的图片:**" if lang == "zh" else "**📁 Processed Images:**"
+                    st.markdown(image_count_label)
                     for i, image_file in enumerate(example_images):
-                        st.markdown(f"✅ {image_file}")
-                    
-                    st.markdown("**📸 分析方式:**")
-                    st.markdown("- 主要依据：图片视觉证据")
-                    st.markdown("- 辅助参考：用户描述信息")
+                        filename = os.path.basename(image_file)
+                        st.markdown(f"  {i+1}. {filename}")
                 
                 with col2:
-                    st.markdown("**📝 用户提供的参考信息:**")
-                    
-                    # Get original input fields from the function scope
-                    # We need to pass these as parameters to track them properly
                     if title:
-                        st.markdown(f"• **古董名称/标题:** {title}")
-                    
-                    # Parse the combined description to show individual fields
+                        title_label = "**🏷️ 古董标题:**" if lang == "zh" else "**🏷️ Antique Title:**"
+                        st.markdown(f"{title_label} {title}")
                     if description:
-                        desc_lines = description.split('\n')
-                        for line in desc_lines:
-                            if line.strip():
-                                st.markdown(f"• **{line}**")
-                    
-                    if not title and not description:
-                        st.markdown("*未提供文字描述信息*")
-                        st.markdown("*鉴定完全基于图片分析*")
-            
-            # Recommendations
-            st.markdown("### 💡 专业建议")
-            if authenticity_score >= 70:
-                st.info("""
-                **建议后续行动:**
-                - ✅ 可考虑进行实物检测确认
-                - 📚 查阅相关历史文献资料
-                - 🏛️ 咨询博物馆或权威鉴定机构
-                - 📸 拍摄更多细节照片建档
-                """)
-            else:
-                st.warning("""
-                **建议谨慎行动:**
-                - ⚠️ 强烈建议实物专业鉴定
-                - 🔍 重点检查工艺和材质细节
-                - 📖 研究同时期真品对比资料
-                - 💰 如用于交易需多方验证
-                """)
+                        desc_label = "**📝 描述信息:**" if lang == "zh" else "**📝 Description:**"
+                        display_desc = description[:100] + "..." if len(description) > 100 else description
+                        st.markdown(f"{desc_label} {display_desc}")
+                        
         else:
-            st.error(f"❌ 评估失败: {result.get('error', result.get('evaluation', '未知错误'))}")
-            st.info("💡 请检查API密钥是否正确，或稍后重试")
+            error_title = "❌ 评估失败" if lang == "zh" else "❌ Evaluation Failed"
+            st.error(f"{error_title}: {result.get('error', 'Unknown error')}")
+            api_check_msg = "💡 请检查API密钥是否正确，或稍后重试" if lang == "zh" else "💡 Please check if API key is correct, or try again later"
+            st.info(api_check_msg)
                 
     except Exception as e:
-        logger.error(f"Evaluation error: {e}")
-        st.error(f"❌ 评估过程中发生错误: {str(e)}")
-        st.info("💡 请检查API密钥是否正确，或稍后重试")
+        error_msg = f"处理过程中发生错误: {str(e)}" if lang == "zh" else f"Error occurred during processing: {str(e)}"
+        st.error(error_msg)
+        logger.error(f"Error in process_evaluation_with_example_images: {str(e)}")
+        api_check_msg = "💡 请检查API密钥是否正确，或稍后重试" if lang == "zh" else "💡 Please check if API key is correct, or try again later"
+        st.info(api_check_msg)
 
 if __name__ == "__main__":
     main() 
