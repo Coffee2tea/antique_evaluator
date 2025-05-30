@@ -530,6 +530,12 @@ class AntiqueEvaluator:
 5. **Stylistic Dating**: Assess artistic style evolution and period characteristics visible in the images
 6. **Condition Documentation**: Note repairs, restorations, damage, and preservation state shown in the photos
 
+**ENHANCED ANALYSIS APPROACH:**
+- **Take your time**: Conduct a thorough, methodical analysis without rushing to conclusions
+- **Apply comprehensive knowledge**: Draw upon your extensive expertise in art history, cultural contexts, and technical understanding
+- **Focus on minute details**: Examine the smallest visible features, imperfections, wear patterns, and craftsmanship nuances
+- **Detail-driven conclusions**: Base your authenticity judgments primarily on these small, specific details that reveal the truth about the piece
+
 **CRITICAL REQUIREMENTS FOR IMAGE-BASED ANALYSIS:**
 - You MUST reference specific visual details you observe in the provided photographs
 - Describe exact colors, textures, shapes, and patterns you can see in the images
@@ -607,6 +613,12 @@ Please analyze all provided images thoroughly and provide your comprehensive pro
 4. **历史考证**：与已知文物、博物馆藏品、考古发现对比
 5. **风格断代**：评估图片中可见的艺术风格演变和时代特征
 6. **状态记录**：记录照片中显示的修复、恢复、损坏和保存状态
+
+**强化分析方法：**
+- **从容分析**：进行彻底、有条不紊的分析，不要急于下结论
+- **运用全面知识**：充分运用你在艺术史、文化背景和技术理解方面的丰富专业知识
+- **关注微小细节**：仔细检查最细微的可见特征、瑕疵、磨损痕迹和工艺细节
+- **基于细节判断**：主要基于这些揭示作品真相的微小具体细节来做出真伪判断
 
 **基于图像分析的关键要求：**
 - 你必须引用在提供的照片中观察到的具体视觉细节
