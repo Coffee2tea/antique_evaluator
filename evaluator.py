@@ -157,7 +157,7 @@ class AntiqueEvaluator:
         - period: 历史时期
         - material: 材质描述
         - brief_analysis: 简要分析总结
-        - detailed_report: 详细分析报告（必须包含完整的6个部分：基础信息识别、工艺技术分析、真伪综合判断、价值评估、评分理由分析(Pros vs. Cons)、最终鉴定结论(Final Authentication Results)）
+        - detailed_report: 详细分析报告（必须包含完整的7个部分：基础信息识别、工艺技术分析、真伪综合判断、价值评估、评分理由分析(Pros vs. Cons)、最终鉴定结论(Final Authentication Results)、专业建议与保养指导）
         
         请开始专业分析，只返回JSON格式的结果。
         """
@@ -647,11 +647,15 @@ class AntiqueEvaluator:
 - 专注于古董的工艺、材质、风格等实质内容
 - 如果某个角度不够清楚，可以基于其他角度的图片进行补充分析
 
-**完整分析框架（必须包含所有6个部分）：**
+**完整分析框架（必须包含所有7个部分）：**
 1. **基础信息识别**：类型、时期、材质初步判断
 2. **工艺技术分析**：制作技法、装饰工艺、技术特点
 3. **真伪综合判断**：时代特征、材料特性、工艺水平评估
-4. **价值评估**：历史价值、艺术价值、收藏价值
+4. **价值评估**：历史价值、艺术价值、收藏价值、增值潜力分析
+   - 历史价值：文物的历史意义和文化价值
+   - 艺术价值：工艺水平、美学价值、艺术成就
+   - 市场价值：当前市场估价和交易参考
+   - 增值潜力分析：未来升值空间、市场趋势、稀缺性评估、收藏前景
 5. **评分理由分析（Pros vs. Cons）**：
    - 支持真品的证据和理由（Pros）
    - 存疑或反对的因素（Cons）  
@@ -660,6 +664,13 @@ class AntiqueEvaluator:
    - 综合所有分析的最终判断
    - 明确的真伪结论和可信度
    - 专业建议和后续推荐
+7. **专业建议与保养指导（Professional Recommendations & Care Instructions）**：
+   - 针对该古董的专业保养方法
+   - 存放环境要求（温湿度、光照等）
+   - 清洁和维护建议
+   - 收藏和展示建议
+   - 进一步鉴定或研究的建议
+   - 投资和交易相关建议（如适用）
 
 **输出要求：**
 - 必须返回完整有效的JSON格式
@@ -675,7 +686,7 @@ class AntiqueEvaluator:
     "period": "历史时期", 
     "material": "材质描述",
     "brief_analysis": "简要判断总结",
-    "detailed_report": "完整分析内容\\n\\n一、基础信息识别\\n详细分析...\\n\\n二、工艺技术分析\\n详细分析...\\n\\n三、真伪综合判断\\n详细分析...\\n\\n四、价值评估\\n详细分析...\\n\\n五、评分理由分析（Pros vs. Cons）\\n**支持真品的证据（Pros）：**\\n• 证据1...\\n• 证据2...\\n**存疑因素（Cons）：**\\n• 疑点1...\\n• 疑点2...\\n**评分理由：**\\n基于以上分析...\\n\\n六、最终鉴定结论（Final Authentication Results）\\n**鉴定结论：**\\n最终判断...\\n**可信度评估：**\\n具体评估...\\n**专业建议：**\\n后续建议..."
+    "detailed_report": "完整分析内容\\n\\n一、基础信息识别\\n详细分析...\\n\\n二、工艺技术分析\\n详细分析...\\n\\n三、真伪综合判断\\n详细分析...\\n\\n四、价值评估\\n**历史价值：**\\n文物历史意义...\\n**艺术价值：**\\n工艺水平评估...\\n**市场价值：**\\n当前市场估价...\\n**增值潜力分析：**\\n• 市场趋势分析\\n• 稀缺性评估\\n• 收藏前景\\n• 未来升值空间\\n\\n五、评分理由分析（Pros vs. Cons）\\n**支持真品的证据（Pros）：**\\n• 证据1...\\n• 证据2...\\n**存疑因素（Cons）：**\\n• 疑点1...\\n• 疑点2...\\n**评分理由：**\\n基于以上分析...\\n\\n六、最终鉴定结论（Final Authentication Results）\\n**鉴定结论：**\\n最终判断...\\n**可信度评估：**\\n具体评估...\\n**专业建议：**\\n后续建议...\\n\\n七、专业建议与保养指导\\n**保养方法：**\\n• 具体保养步骤...\\n**存放要求：**\\n• 环境条件...\\n**收藏建议：**\\n• 专业建议...\\n**注意事项：**\\n• 重要提醒..."
 }
 ```
 
@@ -699,11 +710,15 @@ You are a world-renowned antique authentication expert with extensive knowledge 
 - Focus on substantial content like craftsmanship, materials, and style of the antique
 - If one angle is unclear, supplement analysis based on other angles in the images
 
-**Complete Analysis Framework (Must include all 6 sections):**
+**Complete Analysis Framework (Must include all 7 sections):**
 1. **Basic Information Identification**: Type, period, preliminary material assessment
 2. **Craftsmanship Analysis**: Manufacturing techniques, decorative processes, technical features
 3. **Authenticity Assessment**: Period characteristics, material properties, craftsmanship level evaluation
-4. **Value Assessment**: Historical value, artistic value, collectible value
+4. **Value Assessment**: Historical value, artistic value, collectible value, appreciation potential analysis
+   - Historical value: Historical significance and cultural value of the artifact
+   - Artistic value: Craftsmanship level, aesthetic value, artistic achievement
+   - Market value: Current market valuation and transaction references
+   - Appreciation potential analysis: Future appreciation space, market trends, rarity assessment, collection prospects
 5. **Scoring Rationale Analysis (Pros vs. Cons)**:
    - Evidence supporting authenticity (Pros)
    - Concerning or opposing factors (Cons)
@@ -712,6 +727,13 @@ You are a world-renowned antique authentication expert with extensive knowledge 
    - Comprehensive final judgment from all analysis
    - Clear authenticity conclusion and confidence level
    - Professional recommendations and next steps
+7. **Professional Recommendations & Care Instructions**:
+   - Specific care methods for this antique
+   - Storage environment requirements (temperature, humidity, lighting)
+   - Cleaning and maintenance suggestions
+   - Collection and display recommendations
+   - Further authentication or research suggestions
+   - Investment and trading advice (if applicable)
 
 **Output Requirements:**
 - Must return complete valid JSON format
@@ -727,7 +749,7 @@ You are a world-renowned antique authentication expert with extensive knowledge 
     "period": "Historical Period", 
     "material": "Material Description",
     "brief_analysis": "Brief judgment summary",
-    "detailed_report": "Complete analysis content\\n\\nI. Basic Information Identification\\nDetailed analysis...\\n\\nII. Craftsmanship Analysis\\nDetailed analysis...\\n\\nIII. Authenticity Assessment\\nDetailed analysis...\\n\\nIV. Value Assessment\\nDetailed analysis...\\n\\nV. Scoring Rationale Analysis (Pros vs. Cons)\\n**Evidence Supporting Authenticity (Pros):**\\n• Evidence 1...\\n• Evidence 2...\\n**Concerning Factors (Cons):**\\n• Concern 1...\\n• Concern 2...\\n**Scoring Rationale:**\\nBased on the above analysis...\\n\\nVI. Final Authentication Results\\n**Authentication Conclusion:**\\nFinal judgment...\\n**Confidence Assessment:**\\nSpecific assessment...\\n**Professional Recommendations:**\\nNext steps..."
+    "detailed_report": "Complete analysis content\\n\\nI. Basic Information Identification\\nDetailed analysis...\\n\\nII. Craftsmanship Analysis\\nDetailed analysis...\\n\\nIII. Authenticity Assessment\\nDetailed analysis...\\n\\nIV. Value Assessment\\n**Historical Value:**\\nHistorical Significance and Cultural Value...\\n**Artistic Value:**\\nCraftsmanship Level Assessment...\\n**Market Value:**\\nCurrent Market Valuation...\\n**Appreciation Potential Analysis:**\\n• Market Trend Analysis\\n• Rarity Assessment\\n• Collection Prospects\\n• Future Appreciation Space\\n\\nV. Scoring Rationale Analysis (Pros vs. Cons)\\n**Evidence Supporting Authenticity (Pros):**\\n• Evidence 1...\\n• Evidence 2...\\n**Concerning Factors (Cons):**\\n• Concern 1...\\n• Concern 2...\\n**Scoring Rationale:**\\nBased on the above analysis...\\n\\nVI. Final Authentication Results\\n**Authentication Conclusion:**\\nFinal judgment...\\n**Confidence Assessment:**\\nSpecific assessment...\\n**Professional Recommendations:**\\nNext steps...\\n\\nVII. Professional Recommendations & Care Instructions\\n**Care Methods:**\\n• Specific care steps...\\n**Storage Requirements:**\\n• Environmental conditions...\\n**Collection Advice:**\\n• Professional suggestions...\\n**Important Notes:**\\n• Key reminders..."
 }
 ```
 
@@ -770,7 +792,7 @@ Please start professional analysis and return only JSON format results.
             - period: Historical period
             - material: Material description
             - brief_analysis: Brief analysis summary
-            - detailed_report: Detailed analysis report (must include complete 6 sections: Basic Information Identification, Craftsmanship Analysis, Authenticity Assessment, Value Assessment, Scoring Rationale Analysis (Pros vs. Cons), Final Authentication Results)
+            - detailed_report: Detailed analysis report (must include complete 7 sections: Basic Information Identification, Craftsmanship Analysis, Authenticity Assessment, Value Assessment, Scoring Rationale Analysis (Pros vs. Cons), Final Authentication Results, Professional Recommendations & Care Instructions)
             
             Please start professional analysis and return only JSON format results.
             """
@@ -809,7 +831,7 @@ Please start professional analysis and return only JSON format results.
             - period: 历史时期
             - material: 材质描述
             - brief_analysis: 简要分析总结
-            - detailed_report: 详细分析报告（必须包含完整的6个部分：基础信息识别、工艺技术分析、真伪综合判断、价值评估、评分理由分析(Pros vs. Cons)、最终鉴定结论(Final Authentication Results)）
+            - detailed_report: 详细分析报告（必须包含完整的7个部分：基础信息识别、工艺技术分析、真伪综合判断、价值评估、评分理由分析(Pros vs. Cons)、最终鉴定结论(Final Authentication Results)、专业建议与保养指导）
             
             请开始专业分析，只返回JSON格式的结果。
             """
