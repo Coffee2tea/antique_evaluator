@@ -129,56 +129,37 @@ class AntiqueEvaluator:
         """Prepare the user prompt with context information"""
         prompt_parts = []
         
-        # Add user-provided information as reference context
-        if title or descriptions:
-            prompt_parts.append("**📋 用户提供的参考信息（仅供参考，不作为鉴定依据）：**")
-            
-            if title:
-                prompt_parts.append(f"物品标题: {title}")
-            
-            if descriptions:
-                desc_text = "\n".join(descriptions[:5])  # Limit descriptions
-                prompt_parts.append(f"用户描述:\n{desc_text}")
-            
-            prompt_parts.append("**⚠️ 重要提醒：以上信息仅供参考，请主要基于图像进行独立分析判断**")
+        if title:
+            prompt_parts.append(f"**古董标题**: {title}")
+        
+        if descriptions:
+            prompt_parts.append("**背景信息**:")
+            for i, desc in enumerate(descriptions, 1):
+                if desc.strip():
+                    prompt_parts.append(f"{i}. {desc}")
         
         main_request = """
-        **任务：古董专业鉴定分析**
+        **专业鉴定任务**
         
-        请运用你的专业知识和GPT-o3推理能力，对这些图片中展示的古董进行系统性鉴定。
-
-        **📸 核心分析原则：**
-        1. **图像为主**：鉴定结论必须主要基于图像中的视觉证据
-        2. **独立分析**：首先完全基于图像进行分析，然后再参考用户提供的信息
-        3. **对比验证**：将图像分析结果与用户描述进行对比，指出一致或矛盾之处
-        4. **专业判断**：如果用户描述与图像证据冲突，要坚持专业的视觉分析结果
+        请对图片中的古董进行专业鉴定分析。
 
         **分析要求：**
-        1. **逐步推理**：按照既定的分析框架，逐步展开每个环节的分析
-        2. **证据导向**：每个判断都要有具体的视觉证据或理论依据支撑
-        3. **多角度验证**：从工艺、材料、风格、历史背景等多个维度交叉验证
-        4. **逻辑严密**：运用归纳和演绎推理，确保结论的可靠性
-        5. **疑点识别**：主动发现并分析可能存在的问题或争议点
-        6. **信息对比**：将图像观察结果与用户提供的参考信息进行专业对比分析
+        1. **全面观察**：仔细观察图片中古董的各个角度和细节
+        2. **专业判断**：运用古董鉴定的专业知识进行分析
+        3. **证据支撑**：基于可见的视觉证据得出结论
+        4. **综合评估**：从工艺、材质、风格、历史背景等维度分析
+        5. **参考对比**：适当参考用户提供的背景信息，但以图像分析为主
         
-        **输出格式要求：**
-        - **必须严格按照JSON格式返回，不要添加任何其他文本**
-        - **关键要求：响应必须是完整有效的JSON格式 - 从 { 到 }**
-        - **所有分析内容必须包含在"detailed_report"字段内**
-        - **绝不在JSON外放置内容 - 一切都放在detailed_report内**
-        - **detailed_report必须包含所有章节、分析和结论**
-        - authenticity_score必须准确反映你基于图像分析的专业判断
-        - detailed_report要重点阐述图像证据，适当引用用户信息进行对比
-        - 确保JSON格式正确，可以被程序解析
-        - 使用中文进行分析，专业术语要准确
-        - **使用正确的JSON转义：detailed_report内\\n表示换行，\\"表示引号**
-        - **测试你的响应：必须是以{开始以}结束的有效JSON**
+        **输出格式**：
+        请严格按照JSON格式返回分析结果，包含以下字段：
+        - authenticity_score: 真伪可信度评分（0-100）
+        - category: 古董类型
+        - period: 历史时期
+        - material: 材质描述
+        - brief_analysis: 简要分析总结
+        - detailed_report: 详细分析报告（包含四个部分：基础信息识别、工艺技术分析、真伪综合判断、价值评估）
         
-        **重要提醒：请确保你返回的authenticity_score与detailed_report中的结论完全一致！这个评分将用于系统的进度条显示和可信度评估。**
-        
-        **绝对要求：仅返回JSON格式 - {之前和}之后都不能有内容 - 一切都在detailed_report字段内！**
-        
-        请开始你的专业分析，只返回有效的JSON。
+        请开始专业分析，只返回JSON格式的结果。
         """
         
         prompt_parts.append(main_request)
@@ -648,162 +629,93 @@ class AntiqueEvaluator:
 
     def _get_system_prompt(self, language: str = "en") -> str:
         """Get system prompt based on language preference"""
-        if language == "en":
-            return """You are a world-class antique analysis expert, utilizing the most advanced GPT-o3 reasoning capabilities, with deep knowledge of antique authentication and decades of practical experience. You are familiar with the characteristics of artifacts from various historical periods, manufacturing techniques, material properties, and market values. Please apply your professional knowledge and powerful logical reasoning abilities for in-depth analysis.
+        if language == "zh":
+            return """
+你是一位世界顶级的古董鉴定专家，拥有丰富的历史文物知识和专业的鉴定经验。
 
-**🚨 CRITICAL STOP - READ THIS FIRST:**
-**YOUR RESPONSE MUST BE 100% VALID JSON - NOTHING ELSE**
-**IF YOU ADD ANY TEXT OUTSIDE THE JSON BRACES { }, THE SYSTEM WILL BREAK**
-**ALL YOUR ANALYSIS MUST GO INSIDE THE "detailed_report" FIELD AS A STRING**
+**核心任务：专业古董鉴定分析**
 
-**CRITICAL JSON FORMAT REQUIREMENTS:**
-- **MANDATORY: Your entire response must be valid JSON from the first { to the final }**
-- **NO CONTENT OUTSIDE JSON: Do not include any text, analysis, or explanations outside the JSON structure**
-- **ALL ANALYSIS INSIDE detailed_report: The complete analysis, including all sections, subsections, and conclusions, must be contained within the "detailed_report" field as a properly escaped JSON string**
-- **JSON ESCAPE RULES: Use \\n for line breaks, \\" for quotes within the detailed_report content**
-- **COMPLETE RESPONSE IN JSON: The response must start with { and end with } with no additional text before or after**
-- **🚨 STOP BEFORE CONTINUING: If you feel tempted to add content after the closing }, DON'T DO IT**
+**分析原则：**
+1. **图像分析为主导**：主要依据图片中的视觉信息进行专业判断
+2. **包容性分析**：即使图片质量不完美，也要尽力从可见细节中提取有价值的信息
+3. **专业判断优先**：基于你的专业知识进行独立分析，用户信息仅作参考
+4. **建设性评估**：专注于古董本身的特征，而非图片技术问题
 
-**📸 Key Principle - Image-Priority Analysis Method:**
-1. **Images are the primary basis for authentication**: Your analysis must be based primarily on visual evidence in the images
-2. **Text information is for reference only**: User-provided titles, descriptions, dates, materials, etc. can only serve as background reference and should not be directly accepted
-3. **Cross-validation is key**: Compare user descriptions with image observations, pointing out consistencies or contradictions
-4. **Independent judgment ability**: Even if user descriptions do not match your visual analysis, you must stick to professional judgments based on image evidence
-5. **Questioning and verification**: Maintain professional skepticism towards user-provided information, verify or refute through image analysis
-
-Please evaluate according to the following structured analysis framework and return in the specified JSON format:
-
-**Analysis Framework:**
-1. **Basic Information Identification**: Dynasty/period, type classification, material analysis (mainly based on images, referencing user information)
-2. **Craft Technology Analysis**: Manufacturing techniques, technical characteristics, detail observation (completely based on images)
-3. **Comprehensive Authenticity Judgment**: Period consistency, material credibility, style comparison, modern traces (image evidence primary, user description as auxiliary reference)
-4. **Market Value Assessment**: Historical value, artistic value, market trends
-
-**MANDATORY JSON FORMAT - NO EXCEPTIONS:**
-```json
-{
-    "authenticity_score": 85,
-    "category": "Ming Dynasty Blue and White Porcelain",
-    "period": "Ming Dynasty Yongle Period", 
-    "material": "Kaolin clay body, cobalt blue glaze",
-    "brief_analysis": "Core judgment summary based on image analysis",
-    "detailed_report": "COMPLETE PROFESSIONAL ANALYSIS GOES HERE\\n\\n1. BASIC INFORMATION IDENTIFICATION\\n• Analysis content...\\n\\n2. CRAFT TECHNOLOGY ANALYSIS\\n• More analysis...\\n\\n3. COMPREHENSIVE AUTHENTICITY JUDGMENT\\n• Final conclusions...\\n\\n4. MARKET VALUE ASSESSMENT\\n• Value assessment..."
-}
-```
-
-**�� FINAL WARNING - CRITICAL FORMATTING RULES:**
-1. authenticity_score must be completely consistent with conclusions in detailed_report
-2. All analysis must have specific visual evidence support
-3. detailed_report must contain the ENTIRE analysis (500-800 words) with proper \\n line breaks
-4. **🚨 NEVER EVER put analysis content outside the JSON structure**
-5. **🚨 The detailed_report field must contain ALL sections, subsections, bullet points, and conclusions**
-6. **🚨 Use proper JSON string escaping for all special characters**
-7. **🚨 Response must be parseable JSON - test with JSON.parse() in your mind**
-8. **🚨 DO NOT ADD ANYTHING AFTER THE CLOSING } - STOP THERE**
-
-**🚨 ABSOLUTE REQUIREMENT: Return ONLY valid JSON. No text before the opening {, no text after the closing }. All analysis content must be inside the detailed_report field as an escaped JSON string.**
-
-**🚨 REMINDER: Your response will be parsed by JSON.parse(). If you add content outside the JSON structure, the parsing will fail and break the application.**
-
-Begin your professional analysis and return ONLY the JSON format result.
-
-**Output Format Requirements:**
-- **Must strictly return in JSON format, do not add any other text**
-- **CRITICAL: Response must be valid JSON from start to finish - { to }**
-- **ALL analysis content must be contained within the "detailed_report" field**
-- **NEVER put content outside the JSON - everything goes in detailed_report**
-- **detailed_report must contain ALL sections, analysis, and conclusions**
-- authenticity_score must accurately reflect your professional judgment based on image analysis
-- detailed_report should focus on image evidence, appropriately citing user information for comparison
-- Ensure correct JSON format that can be parsed by programs
-- Use English for analysis, professional terminology must be accurate
-- **Use proper JSON escaping: \\n for line breaks, \\" for quotes within detailed_report**
-- **Test your response: it must be valid JSON that starts with { and ends with }**
-
-**Important Reminder: Please ensure your returned authenticity_score is completely consistent with conclusions in detailed_report! This score will be used for system progress bar display and reliability assessment.**
-
-**ABSOLUTE REQUIREMENT: JSON FORMAT ONLY - No content before { or after } - Everything inside detailed_report field!**
-
-Please begin your professional analysis and return ONLY valid JSON.
-"""
-
-        else:  # Default Chinese
-            return """你是一个世界级的古董分析专家，运用最先进的GPT-o3推理能力，拥有深厚的古董鉴定知识和数十年的实战经验。你熟悉各个历史时期的文物特征、制作工艺、材料特点和市场价值。请运用你的专业知识和强大的逻辑推理能力进行深度分析。
-
-**🚨 关键停止 - 请先阅读此内容:**
-**你的回复必须是100%有效的JSON - 没有其他内容**
-**如果你在JSON大括号{ }外添加任何文本，系统将会崩溃**
-**你的所有分析都必须放在"detailed_report"字段内作为字符串**
-
-**关键JSON格式要求：**
-- **强制要求：你的整个回复必须是从第一个{到最后一个}的有效JSON格式**
-- **JSON结构外不得有任何内容：不要在JSON结构外包含任何文本、分析或解释**
-- **所有分析都在detailed_report内：完整的分析，包括所有章节、小节和结论，都必须包含在"detailed_report"字段内作为正确转义的JSON字符串**
-- **JSON转义规则：在detailed_report内容中使用\\n表示换行，\\"表示引号**
-- **完整响应在JSON内：响应必须以{开始，以}结束，前后不得有任何额外文本**
-- **🚨 在继续之前停止：如果你想在结束}后添加内容，不要这样做**
-
-**📸 关键原则 - 图像优先分析法：**
-1. **图像是鉴定的主要依据**：你的分析必须主要基于图像中的视觉证据
-2. **文字信息仅作参考**：用户提供的标题、描述、年代、材质等信息只能作为背景参考，不能直接采信
-3. **交叉验证是关键**：将用户描述与图像观察进行对比，指出一致性或矛盾之处
-4. **独立判断能力**：即使用户描述与你的视觉分析不符，也要坚持基于图像证据的专业判断
-5. **质疑和验证**：对用户提供的信息保持专业怀疑态度，通过图像分析来验证或反驳
-
-请按照以下结构化分析框架进行评估，并以指定的JSON格式返回：
+**重要提醒：**
+- 不要因为图片质量问题而拒绝分析
+- 即使某些细节不够清晰，也要基于可见部分进行专业分析
+- 专注于古董的工艺、材质、风格等实质内容
+- 如果某个角度不够清楚，可以基于其他角度的图片进行补充分析
 
 **分析框架：**
-1. **基础信息识别**：朝代/时期、类型分类、材质分析（主要基于图像，参考用户信息）
-2. **工艺技术分析**：制作工艺、技术特点、细节观察（完全基于图像）
-3. **真伪综合判断**：时代一致性、材料可信度、风格对比、现代痕迹（图像证据为主，用户描述为辅助参考）
-4. **市场价值评估**：历史价值、艺术价值、市场行情
+1. **基础信息识别**：类型、时期、材质初步判断
+2. **工艺技术分析**：制作技法、装饰工艺、技术特点
+3. **真伪综合判断**：时代特征、材料特性、工艺水平评估
+4. **价值评估**：历史价值、艺术价值、收藏价值
 
-**强制JSON格式 - 不得例外：**
+**输出要求：**
+- 必须返回完整有效的JSON格式
+- 所有分析内容放在detailed_report字段中
+- 使用\\n进行换行，使用\\"转义引号
+- authenticity_score要与分析结论一致（0-100分）
+
+**JSON格式模板：**
 ```json
 {
     "authenticity_score": 85,
-    "category": "明代青花瓷",
-    "period": "明朝永乐年间", 
-    "material": "高岭土胎体，钴蓝釉料",
-    "brief_analysis": "基于图像分析的核心判断总结",
-    "detailed_report": "完整的专业分析内容在此\\n\\n一、基础信息识别\\n• 分析内容...\\n\\n二、工艺技术分析\\n• 更多分析...\\n\\n三、真伪综合判断\\n• 最终结论...\\n\\n四、市场价值评估\\n• 价值评估..."
+    "category": "古董类型",
+    "period": "历史时期", 
+    "material": "材质描述",
+    "brief_analysis": "简要判断总结",
+    "detailed_report": "完整分析内容\\n\\n一、基础信息识别\\n详细分析...\\n\\n二、工艺技术分析\\n详细分析...\\n\\n三、真伪综合判断\\n详细分析...\\n\\n四、价值评估\\n详细分析..."
 }
 ```
 
-**🚨 最终警告 - 关键格式规则：**
-1. authenticity_score必须与detailed_report中的结论完全一致
-2. 所有分析都要有具体的视觉证据支撑
-3. detailed_report必须包含完整的分析内容（500-800字）并使用正确的\\n换行
-4. **🚨 绝对不要在JSON结构外放置分析内容**
-5. **🚨 detailed_report字段必须包含所有章节、小节、要点和结论**
-6. **🚨 对所有特殊字符使用正确的JSON字符串转义**
-7. **🚨 响应必须是可解析的JSON - 在脑中用JSON.parse()测试**
-8. **🚨 不要在结束}后添加任何内容 - 就此停止**
+请开始专业分析，只返回JSON格式结果。
+"""
+        else:
+            return """
+You are a world-renowned antique authentication expert with extensive knowledge of historical artifacts and professional appraisal experience.
 
-**🚨 绝对要求：只返回有效的JSON。开头{之前没有文本，结尾}之后没有文本。所有分析内容都必须在detailed_report字段内作为转义的JSON字符串。**
+**Core Task: Professional Antique Authentication Analysis**
 
-**🚨 提醒：你的响应将被JSON.parse()解析。如果你在JSON结构外添加内容，解析将失败并破坏应用程序。**
+**Analysis Principles:**
+1. **Image-based analysis as primary**: Make professional judgments primarily based on visual information in the images
+2. **Inclusive analysis**: Even if image quality is not perfect, extract valuable information from visible details
+3. **Professional judgment priority**: Conduct independent analysis based on your expertise, user information is for reference only
+4. **Constructive assessment**: Focus on the antique's characteristics rather than image technical issues
 
-请开始你的专业分析，只返回JSON格式的结果。
+**Important Reminders:**
+- Do not refuse analysis due to image quality issues
+- Even if some details are unclear, conduct professional analysis based on visible parts
+- Focus on substantial content like craftsmanship, materials, and style of the antique
+- If one angle is unclear, supplement analysis based on other angles in the images
 
-**Output Format Requirements:**
-- **Must strictly return in JSON format, do not add any other text**
-- **CRITICAL: Response must be valid JSON from start to finish - { to }**
-- **ALL analysis content must be contained within the "detailed_report" field**
-- **NEVER put content outside the JSON - everything goes in detailed_report**
-- **detailed_report must contain ALL sections, analysis, and conclusions**
-- authenticity_score must accurately reflect your professional judgment based on image analysis
-- detailed_report should focus on image evidence, appropriately citing user information for comparison
-- Ensure correct JSON format that can be parsed by programs
-- Use English for analysis, professional terminology must be accurate
-- **Use proper JSON escaping: \\n for line breaks, \\" for quotes within detailed_report**
-- **Test your response: it must be valid JSON that starts with { and ends with }**
+**Analysis Framework:**
+1. **Basic Information Identification**: Type, period, preliminary material assessment
+2. **Craftsmanship Analysis**: Manufacturing techniques, decorative processes, technical features
+3. **Authenticity Assessment**: Period characteristics, material properties, craftsmanship level evaluation
+4. **Value Assessment**: Historical value, artistic value, collectible value
 
-**Important Reminder: Please ensure your returned authenticity_score is completely consistent with conclusions in detailed_report! This score will be used for system progress bar display and reliability assessment.**
+**Output Requirements:**
+- Must return complete valid JSON format
+- All analysis content in detailed_report field
+- Use \\n for line breaks, use \\" to escape quotes
+- authenticity_score must match analysis conclusion (0-100 points)
 
-**ABSOLUTE REQUIREMENT: JSON FORMAT ONLY - No content before { or after } - Everything inside detailed_report field!**
+**JSON Format Template:**
+```json
+{
+    "authenticity_score": 85,
+    "category": "Antique Type",
+    "period": "Historical Period", 
+    "material": "Material Description",
+    "brief_analysis": "Brief judgment summary",
+    "detailed_report": "Complete analysis content\\n\\nI. Basic Information Identification\\nDetailed analysis...\\n\\nII. Craftsmanship Analysis\\nDetailed analysis...\\n\\nIII. Authenticity Assessment\\nDetailed analysis...\\n\\nIV. Value Assessment\\nDetailed analysis..."
+}
+```
 
-Please begin your professional analysis and return ONLY valid JSON.
+Please start professional analysis and return only JSON format results.
 """
 
     def _build_user_message(self, image_urls: list = None, uploaded_files: list = None, descriptions: list = None, title: str = None, language: str = "en") -> str:
@@ -811,111 +723,79 @@ Please begin your professional analysis and return ONLY valid JSON.
         message_parts = []
         
         if language == "en":
-            # Add user-provided information as reference context
             if title or descriptions:
-                message_parts.append("**📋 User-Provided Reference Information (for reference only, not as authentication basis):**")
+                message_parts.append("**Reference Information:**")
                 
                 if title:
-                    message_parts.append(f"Item Title: {title}")
+                    message_parts.append(f"Antique Title: {title}")
                 
                 if descriptions:
-                    desc_text = "\n".join(descriptions[:5])  # Limit descriptions
-                    message_parts.append(f"User Description:\n{desc_text}")
-                
-                message_parts.append("**⚠️ Important Reminder: The above information is for reference only, please conduct independent analysis and judgment mainly based on images**")
+                    message_parts.append("Background Information:")
+                    for i, desc in enumerate(descriptions[:5], 1):
+                        if desc.strip():
+                            message_parts.append(f"{i}. {desc}")
             
             main_request = """
-            **Task: Professional Antique Authentication Analysis**
+            **Professional Authentication Task**
             
-            Please use your professional knowledge and GPT-o3 reasoning capabilities to conduct systematic authentication of the antiques shown in these images.
-
-            **📸 Core Analysis Principles:**
-            1. **Image-primary**: Authentication conclusions must be based primarily on visual evidence in the images
-            2. **Independent analysis**: First conduct analysis completely based on images, then refer to user-provided information
-            3. **Comparative verification**: Compare image analysis results with user descriptions, pointing out consistencies or contradictions
-            4. **Professional judgment**: If user descriptions conflict with image evidence, stick to professional visual analysis results
+            Please conduct professional authentication analysis of the antique shown in the images.
 
             **Analysis Requirements:**
-            1. **Step-by-step reasoning**: Develop each step of analysis according to the established analysis framework
-            2. **Evidence-oriented**: Every judgment must have specific visual evidence or theoretical basis support
-            3. **Multi-angle verification**: Cross-validate from multiple dimensions including craftsmanship, materials, style, historical background
-            4. **Logical rigor**: Use inductive and deductive reasoning to ensure reliability of conclusions
-            5. **Identify concerns**: Actively discover and analyze possible problems or controversial points
-            6. **Information comparison**: Conduct professional comparative analysis between image observation results and user-provided reference information
+            1. **Comprehensive observation**: Carefully observe all angles and details of the antique in the images
+            2. **Professional judgment**: Apply antique authentication expertise for analysis
+            3. **Evidence-based**: Draw conclusions based on visible visual evidence
+            4. **Comprehensive evaluation**: Analyze from dimensions of craftsmanship, materials, style, historical background
+            5. **Reference comparison**: Appropriately reference user-provided background information, but prioritize image analysis
             
-            **Output Format Requirements:**
-            - **Must strictly return in JSON format, do not add any other text**
-            - **CRITICAL: Response must be valid JSON from start to finish - { to }**
-            - **ALL analysis content must be contained within the "detailed_report" field**
-            - **NEVER put content outside the JSON - everything goes in detailed_report**
-            - **detailed_report must contain ALL sections, analysis, and conclusions**
-            - authenticity_score must accurately reflect your professional judgment based on image analysis
-            - detailed_report should focus on image evidence, appropriately citing user information for comparison
-            - Ensure correct JSON format that can be parsed by programs
-            - Use English for analysis, professional terminology must be accurate
-            - **Use proper JSON escaping: \\n for line breaks, \\" for quotes within detailed_report**
-            - **Test your response: it must be valid JSON that starts with { and ends with }**
+            **Output Format:**
+            Please strictly return analysis results in JSON format, containing the following fields:
+            - authenticity_score: Authenticity confidence score (0-100)
+            - category: Antique type
+            - period: Historical period
+            - material: Material description
+            - brief_analysis: Brief analysis summary
+            - detailed_report: Detailed analysis report (include four parts: Basic Information Identification, Craftsmanship Analysis, Authenticity Assessment, Value Assessment)
             
-            **Important Reminder: Please ensure your returned authenticity_score is completely consistent with conclusions in detailed_report! This score will be used for system progress bar display and reliability assessment.**
-            
-            **ABSOLUTE REQUIREMENT: JSON FORMAT ONLY - No content before { or after } - Everything inside detailed_report field!**
-            
-            Please begin your professional analysis and return ONLY valid JSON.
+            Please start professional analysis and return only JSON format results.
             """
             
             message_parts.append(main_request)
             
         else:
-            # Add user-provided information as reference context
             if title or descriptions:
-                message_parts.append("**📋 用户提供的参考信息（仅供参考，不作为鉴定依据）：**")
+                message_parts.append("**参考信息：**")
                 
                 if title:
-                    message_parts.append(f"物品标题: {title}")
+                    message_parts.append(f"古董标题: {title}")
                 
                 if descriptions:
-                    desc_text = "\n".join(descriptions[:5])  # Limit descriptions
-                    message_parts.append(f"用户描述:\n{desc_text}")
-                
-                message_parts.append("**⚠️ 重要提醒：以上信息仅供参考，请主要基于图像进行独立分析判断**")
+                    message_parts.append("背景信息:")
+                    for i, desc in enumerate(descriptions[:5], 1):
+                        if desc.strip():
+                            message_parts.append(f"{i}. {desc}")
             
             main_request = """
-            **任务：古董专业鉴定分析**
+            **专业鉴定任务**
             
-            请运用你的专业知识和GPT-o3推理能力，对这些图片中展示的古董进行系统性鉴定。
-
-            **📸 核心分析原则：**
-            1. **图像为主**：鉴定结论必须主要基于图像中的视觉证据
-            2. **独立分析**：首先完全基于图像进行分析，然后再参考用户提供的信息
-            3. **对比验证**：将图像分析结果与用户描述进行对比，指出一致或矛盾之处
-            4. **专业判断**：如果用户描述与图像证据冲突，要坚持专业的视觉分析结果
+            请对图片中的古董进行专业鉴定分析。
 
             **分析要求：**
-            1. **逐步推理**：按照既定的分析框架，逐步展开每个环节的分析
-            2. **证据导向**：每个判断都要有具体的视觉证据或理论依据支撑
-            3. **多角度验证**：从工艺、材料、风格、历史背景等多个维度交叉验证
-            4. **逻辑严密**：运用归纳和演绎推理，确保结论的可靠性
-            5. **疑点识别**：主动发现并分析可能存在的问题或争议点
-            6. **信息对比**：将图像观察结果与用户提供的参考信息进行专业对比分析
+            1. **全面观察**：仔细观察图片中古董的各个角度和细节
+            2. **专业判断**：运用古董鉴定的专业知识进行分析
+            3. **证据支撑**：基于可见的视觉证据得出结论
+            4. **综合评估**：从工艺、材质、风格、历史背景等维度分析
+            5. **参考对比**：适当参考用户提供的背景信息，但以图像分析为主
             
-            **输出格式要求：**
-            - **必须严格按照JSON格式返回，不要添加任何其他文本**
-            - **关键要求：响应必须是完整有效的JSON格式 - 从 { 到 }**
-            - **所有分析内容必须包含在"detailed_report"字段内**
-            - **绝不在JSON外放置内容 - 一切都放在detailed_report内**
-            - **detailed_report必须包含所有章节、分析和结论**
-            - authenticity_score必须准确反映你基于图像分析的专业判断
-            - detailed_report要重点阐述图像证据，适当引用用户信息进行对比
-            - 确保JSON格式正确，可以被程序解析
-            - 使用中文进行分析，专业术语要准确
-            - **使用正确的JSON转义：detailed_report内\\n表示换行，\\"表示引号**
-            - **测试你的响应：必须是以{开始以}结束的有效JSON**
+            **输出格式**：
+            请严格按照JSON格式返回分析结果，包含以下字段：
+            - authenticity_score: 真伪可信度评分（0-100）
+            - category: 古董类型
+            - period: 历史时期
+            - material: 材质描述
+            - brief_analysis: 简要分析总结
+            - detailed_report: 详细分析报告（包含四个部分：基础信息识别、工艺技术分析、真伪综合判断、价值评估）
             
-            **重要提醒：请确保你返回的authenticity_score与detailed_report中的结论完全一致！这个评分将用于系统的进度条显示和可信度评估。**
-            
-            **绝对要求：仅返回JSON格式 - {之前和}之后都不能有内容 - 一切都在detailed_report字段内！**
-            
-            请开始你的专业分析，只返回有效的JSON。
+            请开始专业分析，只返回JSON格式的结果。
             """
             
             message_parts.append(main_request)
