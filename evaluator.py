@@ -157,7 +157,7 @@ class AntiqueEvaluator:
         - period: 历史时期
         - material: 材质描述
         - brief_analysis: 简要分析总结
-        - detailed_report: 详细分析报告（包含四个部分：基础信息识别、工艺技术分析、真伪综合判断、价值评估）
+        - detailed_report: 详细分析报告（必须包含完整的6个部分：基础信息识别、工艺技术分析、真伪综合判断、价值评估、评分理由分析(Pros vs. Cons)、最终鉴定结论(Final Authentication Results)）
         
         请开始专业分析，只返回JSON格式的结果。
         """
@@ -647,11 +647,19 @@ class AntiqueEvaluator:
 - 专注于古董的工艺、材质、风格等实质内容
 - 如果某个角度不够清楚，可以基于其他角度的图片进行补充分析
 
-**分析框架：**
+**完整分析框架（必须包含所有6个部分）：**
 1. **基础信息识别**：类型、时期、材质初步判断
 2. **工艺技术分析**：制作技法、装饰工艺、技术特点
 3. **真伪综合判断**：时代特征、材料特性、工艺水平评估
 4. **价值评估**：历史价值、艺术价值、收藏价值
+5. **评分理由分析（Pros vs. Cons）**：
+   - 支持真品的证据和理由（Pros）
+   - 存疑或反对的因素（Cons）  
+   - 基于证据权衡得出评分理由
+6. **最终鉴定结论（Final Authentication Results）**：
+   - 综合所有分析的最终判断
+   - 明确的真伪结论和可信度
+   - 专业建议和后续推荐
 
 **输出要求：**
 - 必须返回完整有效的JSON格式
@@ -667,7 +675,7 @@ class AntiqueEvaluator:
     "period": "历史时期", 
     "material": "材质描述",
     "brief_analysis": "简要判断总结",
-    "detailed_report": "完整分析内容\\n\\n一、基础信息识别\\n详细分析...\\n\\n二、工艺技术分析\\n详细分析...\\n\\n三、真伪综合判断\\n详细分析...\\n\\n四、价值评估\\n详细分析..."
+    "detailed_report": "完整分析内容\\n\\n一、基础信息识别\\n详细分析...\\n\\n二、工艺技术分析\\n详细分析...\\n\\n三、真伪综合判断\\n详细分析...\\n\\n四、价值评估\\n详细分析...\\n\\n五、评分理由分析（Pros vs. Cons）\\n**支持真品的证据（Pros）：**\\n• 证据1...\\n• 证据2...\\n**存疑因素（Cons）：**\\n• 疑点1...\\n• 疑点2...\\n**评分理由：**\\n基于以上分析...\\n\\n六、最终鉴定结论（Final Authentication Results）\\n**鉴定结论：**\\n最终判断...\\n**可信度评估：**\\n具体评估...\\n**专业建议：**\\n后续建议..."
 }
 ```
 
@@ -691,11 +699,19 @@ You are a world-renowned antique authentication expert with extensive knowledge 
 - Focus on substantial content like craftsmanship, materials, and style of the antique
 - If one angle is unclear, supplement analysis based on other angles in the images
 
-**Analysis Framework:**
+**Complete Analysis Framework (Must include all 6 sections):**
 1. **Basic Information Identification**: Type, period, preliminary material assessment
 2. **Craftsmanship Analysis**: Manufacturing techniques, decorative processes, technical features
 3. **Authenticity Assessment**: Period characteristics, material properties, craftsmanship level evaluation
 4. **Value Assessment**: Historical value, artistic value, collectible value
+5. **Scoring Rationale Analysis (Pros vs. Cons)**:
+   - Evidence supporting authenticity (Pros)
+   - Concerning or opposing factors (Cons)
+   - Scoring rationale based on evidence weighing
+6. **Final Authentication Results**:
+   - Comprehensive final judgment from all analysis
+   - Clear authenticity conclusion and confidence level
+   - Professional recommendations and next steps
 
 **Output Requirements:**
 - Must return complete valid JSON format
@@ -711,7 +727,7 @@ You are a world-renowned antique authentication expert with extensive knowledge 
     "period": "Historical Period", 
     "material": "Material Description",
     "brief_analysis": "Brief judgment summary",
-    "detailed_report": "Complete analysis content\\n\\nI. Basic Information Identification\\nDetailed analysis...\\n\\nII. Craftsmanship Analysis\\nDetailed analysis...\\n\\nIII. Authenticity Assessment\\nDetailed analysis...\\n\\nIV. Value Assessment\\nDetailed analysis..."
+    "detailed_report": "Complete analysis content\\n\\nI. Basic Information Identification\\nDetailed analysis...\\n\\nII. Craftsmanship Analysis\\nDetailed analysis...\\n\\nIII. Authenticity Assessment\\nDetailed analysis...\\n\\nIV. Value Assessment\\nDetailed analysis...\\n\\nV. Scoring Rationale Analysis (Pros vs. Cons)\\n**Evidence Supporting Authenticity (Pros):**\\n• Evidence 1...\\n• Evidence 2...\\n**Concerning Factors (Cons):**\\n• Concern 1...\\n• Concern 2...\\n**Scoring Rationale:**\\nBased on the above analysis...\\n\\nVI. Final Authentication Results\\n**Authentication Conclusion:**\\nFinal judgment...\\n**Confidence Assessment:**\\nSpecific assessment...\\n**Professional Recommendations:**\\nNext steps..."
 }
 ```
 
@@ -754,7 +770,7 @@ Please start professional analysis and return only JSON format results.
             - period: Historical period
             - material: Material description
             - brief_analysis: Brief analysis summary
-            - detailed_report: Detailed analysis report (include four parts: Basic Information Identification, Craftsmanship Analysis, Authenticity Assessment, Value Assessment)
+            - detailed_report: Detailed analysis report (must include complete 6 sections: Basic Information Identification, Craftsmanship Analysis, Authenticity Assessment, Value Assessment, Scoring Rationale Analysis (Pros vs. Cons), Final Authentication Results)
             
             Please start professional analysis and return only JSON format results.
             """
@@ -793,7 +809,7 @@ Please start professional analysis and return only JSON format results.
             - period: 历史时期
             - material: 材质描述
             - brief_analysis: 简要分析总结
-            - detailed_report: 详细分析报告（包含四个部分：基础信息识别、工艺技术分析、真伪综合判断、价值评估）
+            - detailed_report: 详细分析报告（必须包含完整的6个部分：基础信息识别、工艺技术分析、真伪综合判断、价值评估、评分理由分析(Pros vs. Cons)、最终鉴定结论(Final Authentication Results)）
             
             请开始专业分析，只返回JSON格式的结果。
             """
